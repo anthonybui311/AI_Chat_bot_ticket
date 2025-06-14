@@ -213,8 +213,8 @@ def main():
     - Exits when the user types 'exit', 'quit', or 'bye'.
     """
     print("Chatbot initialized. Type 'exit' or 'quit' or 'bye' to end conversation.")
-    print("Type 'clear' to clear chat history and start a new session file.")
-    print("Type 'new' to start a completely new conversation session.")
+    # print("Type 'clear' to clear chat history and start a new session file.")
+    # print("Type 'new' to start a completely new conversation session.")
     
     # Initialize chain and chat history
     # IMPORTANT: This creates a NEW session file each time main() is called
@@ -236,25 +236,25 @@ def main():
             print(f"Conversation saved to: {chat_history.session_filename}")
             break
         
-        # Check if user wants to clear history (start new session in same file)
-        if user_input.lower() == 'clear':
-            chat_history.clear()  # This creates a new session file
-            print("Chatbot: Chat history cleared! New session started.")
-            continue
+        # # Check if user wants to clear history (start new session in same file)
+        # if user_input.lower() == 'clear':
+        #     chat_history.clear()  # This creates a new session file
+        #     print("Chatbot: Chat history cleared! New session started.")
+        #     continue
         
-        # Check if user wants to start completely new conversation
-        if user_input.lower() == 'new':
-            # End current session
-            file_path = f"/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data/{chat_history.session_filename}"
-            with open(file_path, "a", encoding='utf-8') as f:
-                f.write(f"\n=== Session Ended - New Session Requested at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
+        # # Check if user wants to start completely new conversation
+        # if user_input.lower() == 'new':
+        #     # End current session
+        #     file_path = f"/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data/{chat_history.session_filename}"
+        #     with open(file_path, "a", encoding='utf-8') as f:
+        #         f.write(f"\n=== Session Ended - New Session Requested at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
             
-            print(f"Previous conversation saved to: {chat_history.session_filename}")
+        #     print(f"Previous conversation saved to: {chat_history.session_filename}")
             
-            # Start completely new session
-            chat_history = ChatHistory()  # Creates brand new session file
-            print("Chatbot: New conversation started!")
-            continue
+        #     # Start completely new session
+        #     chat_history = ChatHistory()  # Creates brand new session file
+        #     print("Chatbot: New conversation started!")
+        #     continue
 
         try:
             # Get response from the chain

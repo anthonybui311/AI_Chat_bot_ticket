@@ -1,0 +1,204 @@
+{
+	"info": {
+		"_postman_id": "7427e3e0-c2f4-4859-bf00-6cd6be80cfc0",
+		"name": "DT API Ticket",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5776947"
+	},
+	"item": [
+		{
+			"name": "FindCIWithSerialNum",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://smd.fis.vn/api/FindCIWithSerialNum?serialnum=48917912",
+					"protocol": "https",
+					"host": [
+						"smd",
+						"fis",
+						"vn"
+					],
+					"path": [
+						"api",
+						"FindCIWithSerialNum"
+					],
+					"query": [
+						{
+							"key": "serialnum",
+							"value": "48917912"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ActUpdateTicket",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "  {\r\n    \"ticket_num\": \"2709636\",\r\n    \"ticket_summary\": \"sửa máy ATM\",\r\n    \"sessionid\": \"1190516791\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://smd.fis.vn/api/ActUpdateTicket",
+					"protocol": "https",
+					"host": [
+						"smd",
+						"fis",
+						"vn"
+					],
+					"path": [
+						"api",
+						"ActUpdateTicket"
+					],
+					"query": [
+						{
+							"key": "unit",
+							"value": "bkk",
+							"disabled": true
+						},
+						{
+							"key": "sessionid",
+							"value": "779728226",
+							"disabled": true
+						},
+						{
+							"key": "Category",
+							"value": "open-inprogress",
+							"disabled": true
+						},
+						{
+							"key": "status",
+							"value": "all",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "apiSearchDetailTicketForTicketID",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://smd.fis.vn/api/apiSearchDetailTicketForTicketID?ticketid=2709798",
+					"protocol": "https",
+					"host": [
+						"smd",
+						"fis",
+						"vn"
+					],
+					"path": [
+						"api",
+						"apiSearchDetailTicketForTicketID"
+					],
+					"query": [
+						{
+							"key": "ticketid",
+							"value": "2709798"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CreateTicket",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "  {\r\n    \"serialnum\": \"48917912\",\r\n    \"sessionid\": \"1111\",\r\n    \"summary\":\"máy bị lỗi atm\",\r\n    \"requested\":\"nganpt\",\r\n    \"Area\":\"lỗi sự cố\",\r\n    \"affectedEndUser\": \"HD032017-03-MB\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://smd.fis.vn/api/CreateTicket",
+					"protocol": "https",
+					"host": [
+						"smd",
+						"fis",
+						"vn"
+					],
+					"path": [
+						"api",
+						"CreateTicket"
+					],
+					"query": [
+						{
+							"key": "unit",
+							"value": "bkk",
+							"disabled": true
+						},
+						{
+							"key": "sessionid",
+							"value": "779728226",
+							"disabled": true
+						},
+						{
+							"key": "Category",
+							"value": "open-inprogress",
+							"disabled": true
+						},
+						{
+							"key": "status",
+							"value": "all",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "apiGetAllTicketForSerialNum",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://smd.fis.vn/api/apiGetAllTicketForSerialNum?serialnum=37926762",
+					"protocol": "https",
+					"host": [
+						"smd",
+						"fis",
+						"vn"
+					],
+					"path": [
+						"api",
+						"apiGetAllTicketForSerialNum"
+					],
+					"query": [
+						{
+							"key": "serialnum",
+							"value": "37926762"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
