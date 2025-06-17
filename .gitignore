@@ -12,7 +12,6 @@ agent_ent/
 
 # Environment variables and secrets
 .env
-*.env
 
 # Logs
 logs/
