@@ -45,7 +45,7 @@ def handle_create_stage(response_text, summary, user_input, chain, chat_history,
             
         # Case 4: Response là string (phản hồi thông thường hoặc hướng dẫn)
         elif isinstance(response_text, str):
-            return process_string_response(response_text, summary, user_input, chain, chat_history)
+            return response_text, summary if summary else "tạo ticket"
             
         # Case 5: Fallback
         else:
@@ -89,25 +89,6 @@ def process_ticket_data(ticket_data, user_input, chain, chat_history, stage_mana
         request_response = f"Thông tin ticket còn thiếu: {missing_fields_str}. Vui lòng cung cấp thêm thông tin."
         return request_response, "tạo ticket"
 
-def process_string_response(response_text, summary, user_input, chain, chat_history):
-    """
-    SIMPLIFIED FUNCTION: Xử lý khi response là string
-    IMPROVED: Không cần xử lý confirmation ở đây vì CONFIRMATION stage sẽ handle
-    
-    Args:
-        response_text: String response từ AI
-        summary: Tóm tắt ý định
-        user_input: Input gốc của người dùng
-        chain: LangChain chain
-        chat_history: Lịch sử chat
-        
-    Returns:
-        tuple: (response, summary)
-    """
-    
-    # SIMPLIFIED: Chỉ trả về response gốc với summary tương ứng
-    # CONFIRMATION stage sẽ xử lý logic xác nhận
-    return response_text, summary if summary else "tạo ticket"
 
 def validate_ticket_data(ticket_data):
     """

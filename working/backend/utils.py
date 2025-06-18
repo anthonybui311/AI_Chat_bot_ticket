@@ -252,8 +252,7 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
     
     # Case 3: Đang ở edit stage - Tiếp tục xử lý sửa ticket
     elif stage_manager.current_stage == 'edit':
-        final_response, final_summary = edit.handle_edit_stage(
-            response_text, summary, user_input, chain, chat_history)
+        final_response, final_summary = edit.handle_edit_stage(response_text, summary, user_input, chain, chat_history)
         
         # Chuyển về main stage nếu users muốn tạo hoặc thoát
         if final_summary in ['tạo ticket', 'thoát']:

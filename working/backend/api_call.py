@@ -1,5 +1,5 @@
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 import os
 load_dotenv()
 # APIs FOR CREATE TICKET
@@ -35,7 +35,7 @@ def get_ci_with_sn(serial_number):
     api_url = os.getenv("API_FIND_CI_WITH_SN")
     # API Call
     try:
-        url = api_url.format(serial_number = serial_number)
+        url = api_url.format(serial_number = serial_number) # type: ignore
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json() #print json content in dictionary format
@@ -69,7 +69,7 @@ def post_create_ticket(unit, session_id, category, status):
     api_url = os.getenv("API_CREATE_TICKET")
     # API Call
     try:
-        url = api_url.format(unit = unit, session_id = session_id, category = category, status = status)
+        url = api_url.format(unit = unit, session_id = session_id, category = category, status = status) # type: ignore
         response = requests.post(url)
         if response.status_code == 200:
             ticket_data = response.json()
@@ -110,7 +110,7 @@ def get_all_ticket_for_sn(serial_number):
     api_url = os.getenv("API_GET_ALL_TICKET_FOR_SN")
     # API Call
     try:
-        url = api_url.format(serial_number = serial_number)
+        url = api_url.format(serial_number = serial_number) # type: ignore
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
@@ -149,7 +149,7 @@ def post_update_ticket(unit, session_id, category, status):
     api_url = os.getenv("API_UPDATE_TICKET")
     # API Call
     try:
-        url = api_url.format(unit = unit, session_id = session_id, category = category, status = status)
+        url = api_url.format(unit = unit, session_id = session_id, category = category, status = status) # type: ignore
         response = requests.post(url)
         if response.status_code == 200:
             data = response.json()
@@ -184,7 +184,7 @@ def get_ticket_by_id(ticket_id):
     api_url = os.getenv("API_GET_TICKET_BY_ID")
     # API Call
     try:
-        url = api_url.format(ticket_id = ticket_id)
+        url = api_url.format(ticket_id = ticket_id) # type: ignore
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
@@ -195,14 +195,17 @@ def get_ticket_by_id(ticket_id):
     except Exception as e:
         print(f"Error: {e}")
         return None
+def main():
+    print("Get CI with Serial Number\n")
+    print(get_ci_with_sn("48917912"))
+    print("\nCreate Ticket\n")
+    print(post_create_ticket("bkk", "779728226", "open-inprogress", "all"))
+    print("\nGet All Ticket for Serial Number\n")
+    print(get_all_ticket_for_sn("37926762"))
+    print("\nUpdate Ticket\n")
+    print(post_update_ticket("bkk", "779728226", "open-inprogress", "all"))
+    print("\nGet Ticket by ID\n")
+    print(get_ticket_by_id("1"))
 
-print("Get CI with Serial Number\n")
-print(get_ci_with_sn("48917912"))
-print("\nCreate Ticket\n")
-print(post_create_ticket("bkk", "779728226", "open-inprogress", "all"))
-print("\nGet All Ticket for Serial Number\n")
-print(get_all_ticket_for_sn("37926762"))
-print("\nUpdate Ticket\n")
-print(post_update_ticket("bkk", "779728226", "open-inprogress", "all"))
-print("\nGet Ticket by ID\n")
-print(get_ticket_by_id("2709798"))
+if __name__ == "__main__":
+    main()
