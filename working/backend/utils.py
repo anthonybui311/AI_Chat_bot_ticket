@@ -1,6 +1,7 @@
 from dotenv import load_dotenv # type: ignore
 load_dotenv()
 
+
 from datetime import datetime
 from langchain_groq import ChatGroq # type: ignore
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder # type: ignore
@@ -9,6 +10,9 @@ import json
 import configuration.config as config
 import backend.creating_part.create as create
 import backend.editing_part.edit as edit
+import backend.api_call as api
+
+
 
 # --- STAGE MANAGER CLASS ---
 class StageManager:
@@ -142,7 +146,11 @@ def create_llm():
     """Khởi tạo mô hình AI Groq Llama 3 làm bộ não cho chatbot"""
     llm = ChatGroq(
         model_name=config.MODEL_NAME,
-        temperature=config.TEMPERATURE
+        temperature=config.TEMPERATURE,
+        max_tokens=config.MAX_TOKENS,
+        model_kwargs={
+        "service_tier": "auto"  # or "on_demand" or "auto"
+        }
     )
     return llm
 
@@ -199,7 +207,7 @@ def get_response(chain, chat_history, question, context=""):
     except Exception as e:
         print(f"[ERROR] Chain invoke failed: {e}")
         error_message = f"Xin lỗi, có lỗi xảy ra: {e}"
-        return error_message, "system_error"
+        return error_message, "thoát"
 
 def route_to_stage(stage_manager, response_text, summary, user_input, chain, chat_history):
     """
@@ -222,7 +230,7 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
     
     # Case 1: Đang ở main stage - Phân tích ý định ban đầu
     if stage_manager.is_in_main_stage():
-        if summary == 'tạo ticket':
+        if summary == 'tạo ticket' : #or isinstance(response_text, dict)
             stage_manager.switch_stage('create')
             return create.handle_create_stage(response_text, summary, user_input, chain, chat_history, stage_manager)
         elif summary == 'sửa ticket':
@@ -238,25 +246,50 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
         final_response, final_summary = create.handle_create_stage(
             response_text, summary, user_input, chain, chat_history, stage_manager
         )
+
+        # NEW: Chỉ chuyển sang CONFIRMATION stage nếu user xác nhận đúng VÀ có ticket data
+        if final_summary == "đúng":
+            # Kiểm tra lại ticket data trước khi chuyển stage
+            stored_ticket_data = stage_manager.get_stored_ticket_data()
+            if stored_ticket_data:
+                stage_manager.switch_stage('confirmation')
+                return handle_confirmation_stage(stage_manager, final_response, final_summary, user_input, chain, chat_history)
+            else:
+                # Không có ticket data, ở lại create stage
+                return final_response, "tạo ticket"
         
-        # NEW: Chuyển sang CONFIRMATION stage nếu có ticket data đầy đủ
-        if final_summary == "chờ xác nhận":
+        # Chuyển sang CONFIRMATION stage nếu có ticket data đầy đủ
+        elif final_summary == "chờ xác nhận":
             stage_manager.switch_stage('confirmation')
             return final_response, final_summary
-        
+
         # Chuyển về main stage nếu user muốn sửa hoặc thoát
-        elif final_summary in [ 'sửa ticket', 'thoát']:
+        elif final_summary == 'thoát':
             stage_manager.switch_stage('main')
-            
+            stage_manager.clear_ticket_data()
+            return final_response, final_summary
+        
+        elif final_summary == 'sửa ticket':
+            stage_manager.switch_stage('edit')
+            stage_manager.clear_ticket_data()
+            return final_response, final_summary
+        # Tiếp tục ở create stage
+
         return final_response, final_summary
+
     
     # Case 3: Đang ở edit stage - Tiếp tục xử lý sửa ticket
     elif stage_manager.current_stage == 'edit':
         final_response, final_summary = edit.handle_edit_stage(response_text, summary, user_input, chain, chat_history)
         
         # Chuyển về main stage nếu users muốn tạo hoặc thoát
-        if final_summary in ['tạo ticket', 'thoát']:
+        if final_summary == 'thoát':
             stage_manager.switch_stage('main')
+            return final_response, final_summary
+        elif final_summary == 'tạo ticket':
+            stage_manager.switch_stage('create')
+            return final_response, final_summary
+            
             
         return final_response, final_summary
     
@@ -325,7 +358,7 @@ def handle_confirmation_stage(stage_manager, response_text, summary, user_input,
     except Exception as e:
         print(f"[ERROR] Confirmation stage: {e}")
         error_response = f"Xin lỗi, có lỗi xảy ra trong quá trình xác nhận: {e}"
-        return error_response, "system_error"
+        return error_response, "thoát"
 
 
 def handle_correct_stage(stage_manager, response_text, summary, user_input, chain, chat_history):
@@ -354,15 +387,19 @@ def handle_correct_stage(stage_manager, response_text, summary, user_input, chai
             
             if ticket_data:
                 # Tạo ticket ID và lưu vào database
-                ticket_id = create.save_ticket_to_database(ticket_data)
-                completion_response = f"Ticket {ticket_id} đã được tạo và xử lý thành công! Cảm ơn bạn đã sử dụng dịch vụ."
+                ci_data = create.check_ticket_on_database(ticket_data)
+                if not ci_data: # then create ticket
+                    return handle_creating_ticket(ticket_data)
                 
-                stage_manager.switch_stage('main')
-                return completion_response, "ticket đã được tạo"
+                #TODO: Implement logic to handle 1 CI data
+                elif len(ci_data) == 1:
+                    pass
+                elif len(ci_data) > 1:
+                    response_text = "Mình kiểm tra trên hệ thống thấy có nhiều dữ liệu về thiết bị mà bạn đã cung cấp: {ci_data}. Bạn vui lòng kiểm tra và cung cấp giúp mình thông tin S/N cần mở ticket."
+                    #TODO new stage for user to choose ci_data
+                return "checking", "ticket đã được tạo"
             else:
-                error_response = "Không thể tìm thấy thông tin ticket để xử lý. Về lại trang chủ"
-                stage_manager.switch_stage('main')
-                return error_response, "system_error"
+                return cannot_create_ticket()
         
         # Case 2: Hoàn thành xử lý
         elif summary == 'hoàn thành':
@@ -383,7 +420,52 @@ def handle_correct_stage(stage_manager, response_text, summary, user_input, chai
     except Exception as e:
         print(f"[ERROR] Correct stage: {e}")
         error_response = f"Xin lỗi, có lỗi xảy ra trong quá trình xử lý ticket: {e}"
-        return error_response, "system_error"
+        return error_response, "thoát"
+
+def handle_1_ci_data(ci_data):
+    """
+    Xử lý trường hợp có 1 CI data
+    """
+    print(f"[CI DATA] Found 1 CI: {ci_data}")
+    
+    ci = ci_data[0]
+    serial_number = ci.get('serial_number', 'Không có S/N')
+    ticket = api.get_all_ticket_for_sn(serial_number)
+    
+
+
+
+
+def handle_creating_ticket(ticket_data):
+    try:
+        ticket_id = api.post_create_ticket("bkk", ticket_data['serial_number'], "open-inprogress", "all")
+        if not ticket_id:
+            return cannot_create_ticket()
+        
+        # tạo thành công ticket và thoát
+        response_text = f"Mình đã tạo ticket thành công trên hệ thống. Thông tin phiếu: {ticket_id}. Cảm ơn bạn đã liên hệ, chào tạm biệt bạn! "
+        return response_text, "thoát"
+    except Exception as e:
+        response_text = (f"[ERROR] Create ticket: {e}")
+        # Xử lý lỗi không thể tạo ticket
+        return response_text, "thoát"
+
+def cannot_create_ticket():
+    """
+    Xử lý trường hợp không thể tạo ticket
+    """
+    print("[CREATE] Ticket creation failed.")
+    response_text = "Rất xin lỗi bạn, do hệ thống đang gặp sự cố, mình chưa thể tạo ticket cho bạn được. Bạn vui lòng thực hiện lại sau. Cảm ơn bạn, chào tạm biệt bạn"
+    return response_text, "thoát"
+
+def cancel_create_ticket():
+    """
+    Hủy bỏ quá trình tạo ticket
+    """
+    print("[CREATE] Ticket creation cancelled.")
+    response_text = "Mình đã thực hiện hủy yêu cầu tạo phiếu của bạn rồi ạ. Cảm ơn bạn đã liên hệ, chào tạm biệt bạn!"
+    return response_text, "thoát"
+
 
 def exit_chat(chat_history):
     """

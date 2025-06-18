@@ -6,6 +6,8 @@ MODEL_NAME = "llama-3.3-70b-versatile"
 # temperature: Controls randomness (0 = deterministic, 1 = very creative).
 TEMPERATURE = 0.5
 
+MAX_TOKENS = 4048  # Maximum tokens for the model to generate in one response.
+
 # data_path: Path to the directory where chat history will be saved.
 DATA_PATH = "/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data"
 
@@ -44,7 +46,7 @@ CONTEXT = """
             Từ khóa kích hoạt: "sửa", "sửa ticket", "sửa ticket cũ", "chỉnh sửa", "edit", "modify", "cập nhật", "thay đổi"
             Phản hồi:
             {
-            "response": "Bạn muốn sửa nội dung ticket nào? Vui lòng cung cấp ticket id.",
+            "response": "Bạn muốn sửa nội dung ticket nào? Vui lòng cung cấp thêm thông tin ticket id.",
             "summary": "sửa ticket"
             }
 
@@ -180,7 +182,7 @@ CREATE_CONTEXT = """
             Trigger: "sửa", "chỉnh sửa", "edit", "modify"
             PHẢI TRẢ VỀ:
             {
-            "response": "Đã chuyển sang chế độ sửa ticket cho bạn.",
+            "response": "Đã chuyển sang chế độ sửa ticket cho bạn. Bạn muốn sửa nội dung ticket nào? Vui lòng cung cấp thêm thông tin ticket id.",
             "summary": "sửa ticket"
             }
 
@@ -486,7 +488,7 @@ EDIT_CONTEXT = """
             Trigger: "tạo", "tạo ticket", "ticket mới", "tạo mới"
             PHẢI TRẢ VỀ:
             {
-            "response": "Đã chuyển sang chế độ tạo ticket mới cho bạn.",
+            "response": "Đã chuyển sang chế độ tạo ticket mới cho bạn. Để tạo ticket mới, bạn cần cung cấp thông tin sau: S/N hoặc ID thiết bị và nội dung sự cố.",
             "summary": "tạo ticket"
             }
 

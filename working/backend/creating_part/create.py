@@ -12,50 +12,59 @@ import configuration.config as config
 import backend.utils as utils
 import json
 from datetime import datetime
+import backend.api_call as api
 
 def handle_create_stage(response_text, summary, user_input, chain, chat_history, stage_manager):
     """
     IMPROVED FUNCTION: Xử lý toàn bộ logic cho create stage
-    
-    Args:
-        response_text: Phản hồi từ AI
-        summary: Tóm tắt ý định
-        user_input: Input gốc của người dùng
-        chain: LangChain chain
-        chat_history: Lịch sử chat
-        
-    Returns:
-        tuple: (final_response, final_summary)
+    FIXED: Kiểm tra ticket data trước khi chuyển sang confirmation
     """
-    
     try:
         print(f"[CREATE] Response type: {type(response_text)}")
         
-        # Case 1: Chuyển sang edit stage
-        if summary == 'sửa ticket':
-            return response_text, summary
+        # NEW: Case 1 - Xác nhận đúng (chỉ chuyển sang confirmation nếu có ticket data)
+        if summary == 'đúng':
+            # Kiểm tra xem có ticket data đã được lưu hay không
+            stored_ticket_data = stage_manager.get_stored_ticket_data()
+            if stored_ticket_data:
+                # Có ticket data → chuyển sang confirmation
+                return response_text, summary
+            else:
+                # Không có ticket data → yêu cầu cung cấp thông tin
+                clarification_response = "Cảm ơn bạn! Tuy nhiên mình cần bạn cung cấp thông tin cụ thể để tạo ticket: S/N hoặc ID thiết bị và nội dung sự cố. Ví dụ: '12345, máy in hỏng'"
+                return clarification_response, "tạo ticket"
             
-        # Case 2: Thoát khỏi hệ thống
+        # NEW: Case 2 - Xác nhận sai (ở lại create để nhập lại)
+        elif summary == 'sai':
+            stage_manager.clear_ticket_data()
+            return response_text, "tạo ticket"
+
+        # Case 3: Chuyển sang edit stage
+        elif summary == 'sửa ticket':
+            return response_text, summary
+
+        # Case 4: Thoát khỏi hệ thống
         elif summary == 'thoát':
             return response_text, summary
-            
-        # Case 3: Response là dictionary (thông tin ticket)
+
+        # Case 5: Response là dictionary (thông tin ticket)
         elif isinstance(response_text, dict):
             return process_ticket_data(response_text, user_input, chain, chat_history, stage_manager)
-            
-        # Case 4: Response là string (phản hồi thông thường hoặc hướng dẫn)
+
+        # Case 6: Response là string (phản hồi thông thường hoặc hướng dẫn)
         elif isinstance(response_text, str):
             return response_text, summary if summary else "tạo ticket"
-            
-        # Case 5: Fallback
+
+        # Case 7: Fallback
         else:
             error_response = "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại."
             return error_response, "tạo ticket"
-            
+
     except Exception as e:
         print(f"[ERROR] Create stage: {e}")
         error_response = f"Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu tạo ticket: {e}"
-        return error_response, "system_error"
+        return error_response, "thoát"
+
 
 def process_ticket_data(ticket_data, user_input, chain, chat_history, stage_manager):
     """
@@ -141,7 +150,7 @@ Thông tin này có chính xác không ạ?"""
     
     return confirmation_text
 
-def save_ticket_to_database(ticket_data):
+def check_ticket_on_database(ticket_data):
     """
     IMPROVED: Lưu ticket vào database (placeholder implementation)
     
@@ -153,19 +162,15 @@ def save_ticket_to_database(ticket_data):
     """
     
     try:
-        # TODO: Implement actual database saving logic
-        # For now, generate a mock ticket ID
-        ticket_id = f"TK{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        serial_number = ticket_data.get('serial_number')
+        ci_data = api.get_ci_with_sn(serial_number)
+        return ci_data
         
-        # Log ticket information (for debugging)
-        print(f"[TICKET] Saved ID: {ticket_id}")
-        print(f"[TICKET] Data: {ticket_data}")
-        
-        return ticket_id
         
     except Exception as e:
         print(f"[ERROR] Save ticket: {e}")
         return f"ERROR_{datetime.now().strftime('%H%M%S')}"
+
 
 # Translation mapping for user-friendly field names
 field_translation = {
