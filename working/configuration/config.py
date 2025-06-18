@@ -44,7 +44,7 @@ CONTEXT = """
             Từ khóa kích hoạt: "sửa", "sửa ticket", "sửa ticket cũ", "chỉnh sửa", "edit", "modify", "cập nhật", "thay đổi"
             Phản hồi:
             {
-            "response": "Bạn muốn sửa nội dung ticket nào? Vui lòng cung cấp thêm thông tin.",
+            "response": "Bạn muốn sửa nội dung ticket nào? Vui lòng cung cấp ticket id.",
             "summary": "sửa ticket"
             }
 
