@@ -4,7 +4,7 @@
 Module xử lý logic tạo ticket.
 KHÔNG lấy input trực tiếp từ người dùng.
 Chỉ nhận dữ liệu từ start.py, xử lý và trả về kết quả.
-IMPROVED: Hoàn thiện logic xử lý multi-stage
+IMPROVED: Sử dụng response_data làm ticket_data trực tiếp
 """
 
 import backend.utils as utils
@@ -14,7 +14,7 @@ from datetime import datetime
 
 def handle_create_stage(response_text, summary, user_input, chain, chat_history):
     """
-    NEW FUNCTION: Xử lý toàn bộ logic cho create stage
+    IMPROVED FUNCTION: Xử lý toàn bộ logic cho create stage
     
     Args:
         response_text: Phản hồi từ AI
@@ -28,7 +28,7 @@ def handle_create_stage(response_text, summary, user_input, chain, chat_history)
     """
     
     try:
-        print(f"[CREATE DEBUG] Processing - Response type: {type(response_text)}, Summary: {summary}")
+        print(f"[CREATE] Response type: {type(response_text)}")
         
         # Case 1: Chuyển sang edit stage
         if summary == 'sửa ticket':
@@ -52,13 +52,13 @@ def handle_create_stage(response_text, summary, user_input, chain, chat_history)
             return error_response, "tạo ticket"
             
     except Exception as e:
-        print(f"[CREATE ERROR] {e}")
+        print(f"[ERROR] Create stage: {e}")
         error_response = f"Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu tạo ticket: {e}"
         return error_response, "system_error"
 
 def process_ticket_data(ticket_data, user_input, chain, chat_history):
     """
-    NEW FUNCTION: Xử lý khi response là dictionary chứa thông tin ticket
+    IMPROVED FUNCTION: Xử lý khi response là dictionary chứa thông tin ticket
     
     Args:
         ticket_data: Dictionary chứa thông tin ticket
@@ -70,7 +70,7 @@ def process_ticket_data(ticket_data, user_input, chain, chat_history):
         tuple: (response, summary)
     """
     
-    print(f"[CREATE DEBUG] Processing ticket data: {ticket_data}")
+    print(f"[CREATE] Processing ticket: {list(ticket_data.keys())}")
     
     # Validate ticket data
     is_complete, missing_fields = validate_ticket_data(ticket_data)
@@ -87,7 +87,8 @@ def process_ticket_data(ticket_data, user_input, chain, chat_history):
 
 def process_string_response(response_text, summary, user_input, chain, chat_history):
     """
-    NEW FUNCTION: Xử lý khi response là string
+    SIMPLIFIED FUNCTION: Xử lý khi response là string
+    IMPROVED: Không cần xử lý confirmation ở đây vì CONFIRMATION stage sẽ handle
     
     Args:
         response_text: String response từ AI
@@ -100,62 +101,9 @@ def process_string_response(response_text, summary, user_input, chain, chat_hist
         tuple: (response, summary)
     """
     
-    # FIXED: Kiểm tra xem có phải là phản hồi xác nhận không
-    if is_confirmation_response(user_input):
-        print(f"[CREATE DEBUG] Detected confirmation response: {user_input}")
-        return handle_ticket_confirmation(user_input, chain, chat_history)
-    
-    # Trả về response gốc với summary tương ứng
+    # SIMPLIFIED: Chỉ trả về response gốc với summary tương ứng
+    # CONFIRMATION stage sẽ xử lý logic xác nhận
     return response_text, summary if summary else "tạo ticket"
-
-def handle_ticket_confirmation(user_input, chain, chat_history):
-    """
-    FIXED FUNCTION: Xử lý phản hồi xác nhận ticket từ người dùng
-    
-    Args:
-        user_input: Input xác nhận từ người dùng
-        chain: LangChain chain
-        chat_history: Lịch sử chat
-        
-    Returns:
-        tuple: (response, summary)
-    """
-    
-    # FIXED: Phân tích input xác nhận với các từ khóa chính xác
-    confirmation_keywords_positive = ['đúng', 'chính xác', 'ok', 'yes', 'correct', 'phải', 'vâng', 'ừ', 'uh huh', 'đồng ý']
-    confirmation_keywords_negative = ['sai', 'không chính xác', 'không ok', 'no', 'incorrect', 'không phải', 'không đúng', 'không đồng ý']
-    
-    user_input_lower = user_input.lower().strip()
-    print(f"[CREATE DEBUG] Analyzing confirmation input: '{user_input_lower}'")
-    
-    # FIXED: Xác nhận ĐÚNG - Tạo ticket
-    is_positive = any(keyword in user_input_lower for keyword in confirmation_keywords_positive)
-    is_negative = any(keyword in user_input_lower for keyword in confirmation_keywords_negative)
-    
-    print(f"[CREATE DEBUG] Is positive: {is_positive}, Is negative: {is_negative}")
-    
-    if is_positive and not is_negative:
-        # Lấy thông tin ticket từ lịch sử chat gần đây nhất
-        ticket_info = extract_ticket_from_history(chat_history)
-        
-        if ticket_info:
-            # Lưu ticket
-            ticket_id = save_ticket_to_database(ticket_info)
-            success_response = f"Ticket đã được tạo thành công với ID: {ticket_id}. Cảm ơn bạn đã sử dụng dịch vụ!"
-            return success_response, "ticket_created"  # FIXED: Changed from "ticket được tạo" to "ticket_created"
-        else:
-            error_response = "Không thể tìm thấy thông tin ticket để lưu. Vui lòng thử lại."
-            return error_response, "tạo ticket"
-    
-    # FIXED: Xác nhận SAI - Yêu cầu nhập lại
-    elif is_negative and not is_positive:
-        retry_response = "Cảm ơn bạn đã phản hồi. Vui lòng cung cấp lại thông tin chính xác để mình tạo ticket mới cho bạn."
-        return retry_response, "tạo ticket"
-    
-    # FIXED: Không rõ ràng - Hỏi lại
-    else:
-        clarify_response = "Mình chưa hiểu ý bạn. Thông tin ticket trên có chính xác không? Vui lòng trả lời 'đúng' hoặc 'sai'."
-        return clarify_response, "awaiting_confirmation_create"
 
 def validate_ticket_data(ticket_data):
     """
@@ -185,7 +133,7 @@ def validate_ticket_data(ticket_data):
 
 def format_ticket_confirmation(ticket_data):
     """
-    NEW FUNCTION: Format thông tin ticket để xác nhận
+    IMPROVED FUNCTION: Format thông tin ticket để xác nhận
     
     Args:
         ticket_data: Dictionary chứa thông tin ticket
@@ -208,78 +156,6 @@ Thông tin này có chính xác không ạ?"""
     
     return confirmation_text
 
-def is_confirmation_response(user_input):
-    """
-    FIXED FUNCTION: Kiểm tra xem input có phải là phản hồi xác nhận không
-    
-    Args:
-        user_input: Input của người dùng
-        
-    Returns:
-        bool: True nếu là phản hồi xác nhận
-    """
-    
-    confirmation_indicators = [
-        'đúng', 'sai', 'chính xác', 'không chính xác', 'ok', 'không ok',
-        'yes', 'no', 'correct', 'incorrect', 'phải', 'không phải',
-        'vâng', 'không', 'ừ', 'uh huh', 'đồng ý', 'không đồng ý'
-    ]
-    
-    user_input_lower = user_input.lower().strip()
-    
-    # FIXED: Kiểm tra input có chứa từ khóa xác nhận
-    # Không giới hạn số từ vì người dùng có thể nói "đúng rồi", "sai rồi", etc.
-    return any(indicator in user_input_lower for indicator in confirmation_indicators)
-
-def extract_ticket_from_history(chat_history):
-    """
-    FIXED FUNCTION: Trích xuất thông tin ticket từ lịch sử chat
-    
-    Args:
-        chat_history: Đối tượng ChatHistory
-        
-    Returns:
-        dict: Thông tin ticket hoặc None nếu không tìm thấy
-    """
-    
-    # Tìm trong các tin nhắn AI gần đây nhất để tìm thông tin ticket
-    messages = chat_history.get_messages()
-    
-    # Duyệt ngược từ tin nhắn gần nhất
-    for message in reversed(messages):
-        if hasattr(message, 'content') and 'S/N hoặc ID thiết bị:' in message.content:
-            # Parse thông tin ticket từ message content
-            try:
-                lines = message.content.split('\n')
-                ticket_info = {}
-                
-                for line in lines:
-                    line = line.strip()
-                    if 'S/N hoặc ID thiết bị:' in line:
-                        value = line.split(':', 1)[1].strip()
-                        if value and value != 'Chưa có':
-                            ticket_info['serial_number'] = value
-                    elif 'Loại thiết bị:' in line:
-                        value = line.split(':', 1)[1].strip()
-                        if value and value != 'Chưa có':
-                            ticket_info['device_type'] = value
-                    elif 'Nội dung sự cố:' in line:
-                        value = line.split(':', 1)[1].strip()
-                        if value and value != 'Chưa có':
-                            ticket_info['problem_description'] = value
-                
-                # FIXED: Trả về ticket_info nếu có ít nhất một trường hợp lệ
-                if len(ticket_info) > 0:
-                    print(f"[CREATE DEBUG] Extracted ticket info: {ticket_info}")
-                    return ticket_info
-                    
-            except Exception as e:
-                print(f"[EXTRACT ERROR] {e}")
-                continue
-    
-    print("[CREATE DEBUG] No ticket info found in history")
-    return None
-
 def save_ticket_to_database(ticket_data):
     """
     IMPROVED: Lưu ticket vào database (placeholder implementation)
@@ -297,13 +173,13 @@ def save_ticket_to_database(ticket_data):
         ticket_id = f"TK{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
         # Log ticket information (for debugging)
-        print(f"[TICKET SAVED] ID: {ticket_id}")
-        print(f"[TICKET DATA] {ticket_data}")
+        print(f"[TICKET] Saved ID: {ticket_id}")
+        print(f"[TICKET] Data: {ticket_data}")
         
         return ticket_id
         
     except Exception as e:
-        print(f"[SAVE ERROR] {e}")
+        print(f"[ERROR] Save ticket: {e}")
         return f"ERROR_{datetime.now().strftime('%H%M%S')}"
 
 # Translation mapping for user-friendly field names
