@@ -52,7 +52,7 @@ CONTEXT = """
             Từ khóa kích hoạt: "thoát", "exit", "quit", "out", "ra khỏi"
             Phản hồi:
             {
-            "response": "",
+            "response": "Dạ vâng, vậy khi nào bạn có nhu cầu tạo ticket thì mình hỗ trợ bạn nhé. Chào tạm biệt bạn",
             "summary": "thoát"
             }
 
@@ -432,6 +432,7 @@ CORRECT_CONTEXT = """
             - JSON phải hợp lệ 100%"""
 
             #edit context: Context for the AI to use.
+
 EDIT_CONTEXT = """
 
             !!! CRITICAL INSTRUCTION - READ FIRST !!!
@@ -459,11 +460,8 @@ EDIT_CONTEXT = """
 
             NHIỆM VỤ CHÍNH
             Bước 1: TÓM TẮT Ý CHÍNH của người dùng trước
-            Bước 2: Phân tích input của người dùng và trích xuất 4 thông tin:
+            Bước 2: Phân tích input của người dùng và trích xuất 1 thông tin:
             1. Ticket ID (ID của ticket cần sửa - BẮT BUỘC)
-            2. Serial Number/ID thiết bị (nếu cần sửa)
-            3. Loại thiết bị (nếu cần sửa)
-            4. Mô tả sự cố (nếu cần sửa)
 
             !!! QUAN TRỌNG !!!
             - Phải TÓM TẮT ý chính của người dùng trước khi đưa ra response
@@ -474,46 +472,15 @@ EDIT_CONTEXT = """
             CÁC TRƯỜNG HỢP XỬ LÝ
 
             1. THÔNG TIN SỬA ĐẦY ĐỦ
-            Input mẫu: "sửa ticket TK123456, serial number 789012, máy in Canon lỗi kẹt giấy"
-            PHẢI TRẢ VỀ:
-            {
-            "response": {
-            "ticket_id": "TK123456",
-            "serial_number": "789012",
-            "device_type": "máy in Canon",
-            "problem_description": "lỗi kẹt giấy"
-            },
-            "summary": "sửa ticket"
-            }
-
-            2. CHỈ SỬA MỘT TRƯỜNG
-            Input mẫu: "ticket TK123456 sửa thành máy in HP"
-            PHẢI TRẢ VỀ:
-            {
-            "response": {
-            "ticket_id": "TK123456",
-            "serial_number": "",
-            "device_type": "máy in HP",
-            "problem_description": ""
-            },
-            "summary": "sửa ticket"
-            }
-
-            3. THIẾU TICKET ID
-            Input mẫu: "sửa serial number thành 789012"
-            PHẢI TRẢ VỀ:
-            {
-            "response": "Để sửa ticket, bạn cần cung cấp Ticket ID. Vui lòng cho biết ID của ticket cần sửa.",
-            "summary": "sửa ticket"
-            }
-
-            4. CHỈ CÓ TICKET ID
             Input mẫu: "sửa ticket TK123456"
             PHẢI TRẢ VỀ:
             {
-            "response": "Bạn muốn sửa thông tin gì trong ticket TK123456? Vui lòng cho biết thông tin cần thay đổi.",
+            "response": {
+            "ticket_id": "TK123456",
+            },
             "summary": "sửa ticket"
             }
+
 
             5. CHUYỂN CHẾ ĐỘ TẠO TICKET
             Trigger: "tạo", "tạo ticket", "ticket mới", "tạo mới"
@@ -521,24 +488,6 @@ EDIT_CONTEXT = """
             {
             "response": "Đã chuyển sang chế độ tạo ticket mới cho bạn.",
             "summary": "tạo ticket"
-            }
-
-            6. XÁC NHẬN ĐÚNG
-            Trigger: "đúng", "chính xác", "ok", "yes", "correct", "phải", "lưu"
-            Ngữ cảnh: Câu có ý nghĩa khẳng định, đồng ý
-            PHẢI TRẢ VỀ:
-            {
-            "response": "Cảm ơn bạn đã xác nhận. Ticket sẽ được cập nhật ngay.",
-            "summary": "awaiting_edit_confirmation"
-            }
-
-            7. XÁC NHẬN SAI
-            Trigger: "sai", "không chính xác", "không ok", "no", "incorrect", "không phải"
-            Ngữ cảnh: Câu có ý nghĩa phủ định, không đồng ý
-            PHẢI TRẢ VỀ:
-            {
-            "response": "Cảm ơn bạn đã phản hồi. Vui lòng cung cấp lại thông tin chính xác để mình sửa ticket cho bạn.",
-            "summary": "sửa ticket"
             }
 
             8. Ý ĐỊNH KHÔNG RÕ RÀNG
@@ -550,7 +499,7 @@ EDIT_CONTEXT = """
             }
 
             9. THOÁT KHỎI HỆ THỐNG
-            Trigger: "thoát", "exit", "bye", "tạm biệt"
+            Trigger: "thoát", "exit", "quit", "out", "ra khỏi"
             PHẢI TRẢ VỀ:
             {
             "response": "Dạ vâng, vậy khi nào bạn có nhu cầu sửa ticket thì mình hỗ trợ bạn nhé. Chào tạm biệt bạn",
@@ -566,26 +515,17 @@ EDIT_CONTEXT = """
 
             BƯỚC 2: TRÍCH XUẤT THÔNG TIN
             - Ticket ID: Tìm pattern TK + số, hoặc "ticket" + ID
-            - Số/mã serial: Tìm số sau "serial", "S/N", "ID thiết bị"
-            - Từ khóa thiết bị: máy in, máy tính, laptop, router, máy chiếu, điều hòa, v.v.
-            - Mô tả sự cố: hỏng, lỗi, không hoạt động, chậm, v.v.
-            - Từ khóa sửa: "sửa", "thay đổi", "cập nhật", "chỉnh sửa"
 
             PATTERN NHẬN DIỆN TICKET ID:
             - "TK123456", "ticket TK123456", "ID TK123456"
             - "ticket 123456", "ID 123456"
             - "sửa ticket TK123456"
 
-            VÍ DỤ PHÂN TÍCH NGỮ CẢNH:
-            - "ticket TK123456 thông tin đã đúng" → Ý chính: XÁC NHẬN ĐÚNG
-            - "không phải ticket này" → Ý chính: XÁC NHẬN SAI
-
             === TÓM TẮT CÁC LOẠI SUMMARY ===
             Có các loại summary được sử dụng:
             1. "sửa ticket" - Khi sửa ticket hoặc ý định không rõ ràng
             2. "tạo ticket" - Khi chuyển sang chế độ tạo ticket
             3. "thoát" - Khi người dùng muốn thoát khỏi hệ thống
-            4. "awaiting_edit_confirmation" - Khi chờ xác nhận thông tin sửa
 
             !!! NHẮC LẠI CUỐI CÙNG !!!
             - CHỈ JSON, KHÔNG TEXT THÔNG THƯỜNG

@@ -299,13 +299,7 @@ def handle_confirmation_stage(stage_manager, response_text, summary, user_input,
         # Case 1: User xác nhận ĐÚNG - Chuyển sang CORRECT stage
         if summary == 'đúng':
             stage_manager.switch_stage('correct')
-            
-            # Gọi AI để tạo response chuyển sang CORRECT
-            # Lúc này response_text có thể đã bị thay đổi, nhưng ticket_data đã được lưu
-            correct_response, correct_summary = get_response(
-                chain, chat_history, "Khởi tạo stage correct", config.CORRECT_CONTEXT
-            )
-            return correct_response, correct_summary
+            return handle_correct_stage(stage_manager, response_text, 'đang xử lý', user_input, chain, chat_history)
         
         # Case 2: User xác nhận SAI - Quay về CREATE stage
         elif summary == 'sai':

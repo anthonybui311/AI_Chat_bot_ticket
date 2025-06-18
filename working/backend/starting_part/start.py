@@ -66,7 +66,7 @@ def start():
                 break
             
             # IMPROVED: Xử lý đặc biệt cho ticket_created
-            if final_summary == 'ticket_created':
+            if final_summary == 'ticket đã được tạo':
                 chat_history.add_user_message(user_input)
                 chat_history.add_ai_message(final_response)
                 print(f"Chatbot: {final_response}")
