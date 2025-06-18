@@ -360,6 +360,7 @@ CONFIRMATION_CONTEXT = """
             - SENTIMENT ANALYSIS là nhiệm vụ chính"""
 
             # NEW: CORRECT CONTEXT - Placeholder for future expansion
+
 CORRECT_CONTEXT = """
             !!! CRITICAL INSTRUCTION - READ FIRST !!!
             BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT: CHỈ TRẢ VỀ JSON, KHÔNG BAO GIỜ TRẢ VỀ TEXT THÔNG THƯỜNG

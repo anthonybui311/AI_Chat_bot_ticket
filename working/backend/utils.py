@@ -1,10 +1,10 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 load_dotenv()
 
 from datetime import datetime
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_groq import ChatGroq # type: ignore
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder # type: ignore
+from langchain_core.messages import HumanMessage, AIMessage # type: ignore
 import json
 import configuration.config as config
 import backend.creating_part.create as create
@@ -224,7 +224,7 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
     if stage_manager.is_in_main_stage():
         if summary == 'tạo ticket':
             stage_manager.switch_stage('create')
-            return create.handle_create_stage(response_text, summary, user_input, chain, chat_history)
+            return create.handle_create_stage(response_text, summary, user_input, chain, chat_history, stage_manager)
         elif summary == 'sửa ticket':
             stage_manager.switch_stage('edit')
             return edit.handle_edit_stage(response_text, summary, user_input, chain, chat_history)
@@ -236,16 +236,16 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
     # Case 2: Đang ở create stage - Tiếp tục xử lý tạo ticket
     elif stage_manager.current_stage == 'create':
         final_response, final_summary = create.handle_create_stage(
-            response_text, summary, user_input, chain, chat_history
+            response_text, summary, user_input, chain, chat_history, stage_manager
         )
         
         # NEW: Chuyển sang CONFIRMATION stage nếu có ticket data đầy đủ
-        if final_summary == "awaiting_confirmation_create":
+        if final_summary == "chờ xác nhận":
             stage_manager.switch_stage('confirmation')
             return final_response, final_summary
         
-        # Chuyển về main stage nếu hoàn thành hoặc thoát
-        elif final_summary in ['ticket_created', 'sửa ticket', 'thoát']:
+        # Chuyển về main stage nếu user muốn sửa hoặc thoát
+        elif final_summary in [ 'sửa ticket', 'thoát']:
             stage_manager.switch_stage('main')
             
         return final_response, final_summary
@@ -253,11 +253,10 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
     # Case 3: Đang ở edit stage - Tiếp tục xử lý sửa ticket
     elif stage_manager.current_stage == 'edit':
         final_response, final_summary = edit.handle_edit_stage(
-            response_text, summary, user_input, chain, chat_history
-        )
+            response_text, summary, user_input, chain, chat_history)
         
-        # Chuyển về main stage nếu hoàn thành hoặc thoát
-        if final_summary in ['ticket_edited', 'tạo ticket', 'thoát']:
+        # Chuyển về main stage nếu users muốn tạo hoặc thoát
+        if final_summary in ['tạo ticket', 'thoát']:
             stage_manager.switch_stage('main')
             
         return final_response, final_summary
@@ -270,12 +269,17 @@ def route_to_stage(stage_manager, response_text, summary, user_input, chain, cha
     elif stage_manager.is_in_correct_stage():
         return handle_correct_stage(stage_manager, response_text, summary, user_input, chain, chat_history)
     
+    
+    #TODO: New Case 6: Đang ở main stage - Ticket được tạo, tạm thời về lại main
+    
+    
     # Fallback: Trả về response gốc
     return response_text, summary
 
 def handle_confirmation_stage(stage_manager, response_text, summary, user_input, chain, chat_history):
     """
-    NEW FUNCTION: Xử lý logic cho CONFIRMATION stage
+    IMPROVED FUNCTION: Xử lý logic cho CONFIRMATION stage
+    FIXED: Lưu ticket_data trước khi AI thay đổi response_text
     
     Args:
         stage_manager: Đối tượng quản lý stage
@@ -294,12 +298,10 @@ def handle_confirmation_stage(stage_manager, response_text, summary, user_input,
         
         # Case 1: User xác nhận ĐÚNG - Chuyển sang CORRECT stage
         if summary == 'đúng':
-            # NEW: Lưu ticket_data nếu response_text là dictionary
-            if isinstance(response_text, dict):
-                stage_manager.store_ticket_data(response_text)
-            
             stage_manager.switch_stage('correct')
+            
             # Gọi AI để tạo response chuyển sang CORRECT
+            # Lúc này response_text có thể đã bị thay đổi, nhưng ticket_data đã được lưu
             correct_response, correct_summary = get_response(
                 chain, chat_history, "Khởi tạo stage correct", config.CORRECT_CONTEXT
             )
@@ -314,22 +316,24 @@ def handle_confirmation_stage(stage_manager, response_text, summary, user_input,
         # Case 3: Chuyển sang edit stage
         elif summary == 'sửa ticket':
             stage_manager.switch_stage('edit')
+            stage_manager.clear_ticket_data()  # Xóa dữ liệu ticket cũ
             return response_text, summary
         
         # Case 4: Thoát khỏi hệ thống
         elif summary == 'thoát':
             stage_manager.switch_stage('main')
-            stage_manager.clear_ticket_data()
+            stage_manager.clear_ticket_data()  # Xóa dữ liệu ticket cũ
             return response_text, summary
         
         # Case 5: Không xác định - Ở lại confirmation stage
         else:
-            return response_text, "awaiting_confirmation_create"
+            return response_text, "chờ xác nhận"
             
     except Exception as e:
         print(f"[ERROR] Confirmation stage: {e}")
         error_response = f"Xin lỗi, có lỗi xảy ra trong quá trình xác nhận: {e}"
         return error_response, "system_error"
+
 
 def handle_correct_stage(stage_manager, response_text, summary, user_input, chain, chat_history):
     """
@@ -360,18 +364,18 @@ def handle_correct_stage(stage_manager, response_text, summary, user_input, chai
                 ticket_id = create.save_ticket_to_database(ticket_data)
                 completion_response = f"Ticket {ticket_id} đã được tạo và xử lý thành công! Cảm ơn bạn đã sử dụng dịch vụ."
                 
-                # IMPROVED: Không tự động chuyển về main, chờ user action
-                stage_manager.clear_ticket_data()
-                return completion_response, "ticket_created"
+                stage_manager.switch_stage('main')
+                return completion_response, "ticket đã được tạo"
             else:
-                error_response = "Không thể tìm thấy thông tin ticket để xử lý."
+                error_response = "Không thể tìm thấy thông tin ticket để xử lý. Về lại trang chủ"
+                stage_manager.switch_stage('main')
                 return error_response, "system_error"
         
         # Case 2: Hoàn thành xử lý
         elif summary == 'hoàn thành':
             stage_manager.switch_stage('main')
             stage_manager.clear_ticket_data()
-            return response_text, "ticket_created"
+            return response_text, "ticket đã được tạo"
         
         # Case 3: Thoát khỏi hệ thống
         elif summary == 'thoát':

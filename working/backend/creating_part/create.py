@@ -9,10 +9,11 @@ IMPROVED: Sử dụng response_data làm ticket_data trực tiếp
 
 import backend.utils as utils
 import configuration.config as config
+import backend.utils as utils
 import json
 from datetime import datetime
 
-def handle_create_stage(response_text, summary, user_input, chain, chat_history):
+def handle_create_stage(response_text, summary, user_input, chain, chat_history, stage_manager):
     """
     IMPROVED FUNCTION: Xử lý toàn bộ logic cho create stage
     
@@ -40,7 +41,7 @@ def handle_create_stage(response_text, summary, user_input, chain, chat_history)
             
         # Case 3: Response là dictionary (thông tin ticket)
         elif isinstance(response_text, dict):
-            return process_ticket_data(response_text, user_input, chain, chat_history)
+            return process_ticket_data(response_text, user_input, chain, chat_history, stage_manager)
             
         # Case 4: Response là string (phản hồi thông thường hoặc hướng dẫn)
         elif isinstance(response_text, str):
@@ -56,7 +57,7 @@ def handle_create_stage(response_text, summary, user_input, chain, chat_history)
         error_response = f"Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu tạo ticket: {e}"
         return error_response, "system_error"
 
-def process_ticket_data(ticket_data, user_input, chain, chat_history):
+def process_ticket_data(ticket_data, user_input, chain, chat_history, stage_manager):
     """
     IMPROVED FUNCTION: Xử lý khi response là dictionary chứa thông tin ticket
     
@@ -78,7 +79,10 @@ def process_ticket_data(ticket_data, user_input, chain, chat_history):
     if is_complete:
         # Ticket đầy đủ thông tin - Hiển thị để xác nhận
         confirmation_response = format_ticket_confirmation(ticket_data)
-        return confirmation_response, "awaiting_confirmation_create"
+        stage_manager.store_ticket_data(ticket_data)
+        print(f"[CREATE] Confirmation response: {confirmation_response}")
+        
+        return confirmation_response, "chờ xác nhận"
     else:
         # Ticket thiếu thông tin - Yêu cầu bổ sung
         missing_fields_str = ", ".join([field_translation.get(f, f) for f in missing_fields])

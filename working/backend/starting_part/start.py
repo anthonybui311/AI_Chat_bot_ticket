@@ -28,9 +28,7 @@ def start():
     chain = utils.create_chain()
     chat_history = utils.ChatHistory()
     stage_manager = utils.StageManager()
-    
-    # Hiển thị câu chào đầu tiên
-    print("Chatbot: Chào bạn! Mình là trợ lý hỗ trợ về ticket. Bạn muốn tạo ticket hay sửa nội dung ticket đã có?")
+
     
     while True:
         try:
