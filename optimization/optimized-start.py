@@ -1,3 +1,21 @@
+# start.py - Optimized Main Entry Point
+"""
+OPTIMIZED AI CHATBOT TICKET SYSTEM - MAIN CONTROLLER
+
+This module serves as the main entry point for the chatbot system.
+Responsibilities:
+- Initialize chat session and components
+- Handle main conversation loop
+- Process user input and display responses
+- Manage graceful shutdown
+
+OPTIMIZATION IMPROVEMENTS:
+- Simplified main loop structure
+- Better error handling and logging
+- Cleaner input/output management
+- Enhanced user experience with status indicators
+"""
+
 import sys
 import logging
 from typing import Optional, Tuple
@@ -200,7 +218,7 @@ class ChatbotSession:
                 print("Vui lòng thử lại hoặc nhập 'thoát' để kết thúc.")
 
 
-def start() -> None:
+def main() -> None:
     """
     OPTIMIZED: Main entry point with proper error handling
     """
@@ -222,4 +240,39 @@ def start() -> None:
 
 
 if __name__ == "__main__":
-    start()
+    main()
+
+
+"""
+OPTIMIZATION SUMMARY FOR START.PY:
+
+1. STRUCTURE IMPROVEMENTS:
+   - Encapsulated session management in ChatbotSession class
+   - Separated concerns: input handling, processing, output
+   - Added proper logging throughout the system
+   - Cleaner main loop with better error handling
+
+2. ERROR HANDLING ENHANCEMENTS:
+   - Try-catch blocks for all major operations
+   - Graceful handling of KeyboardInterrupt and EOFError
+   - Comprehensive logging for debugging
+   - Proper cleanup on shutdown
+
+3. USER EXPERIENCE IMPROVEMENTS:
+   - Enhanced welcome message with formatting
+   - Stage indicators in input prompt
+   - Better error messages for users
+   - Consistent response formatting
+
+4. CODE QUALITY:
+   - Type hints for better code documentation
+   - Docstrings for all methods
+   - Consistent naming conventions
+   - Modular design for easier testing
+
+5. WORKFLOW OPTIMIZATION:
+   - Streamlined input processing logic
+   - Better integration with utils.py functions
+   - Proper state management through stage_manager
+   - Special case handling for different response types
+"""
