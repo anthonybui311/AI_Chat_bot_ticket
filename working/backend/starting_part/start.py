@@ -4,10 +4,10 @@ from typing import Optional, Tuple
 from datetime import datetime
 
 # Internal imports
-import backend.editing_part.edit as edit_module
-import backend.creating_part.create as create_module
-import backend.utils as utils
-import configuration.config as config
+import working.backend.editing_part.edit as edit_module
+import working.backend.creating_part.create as create_module
+import working.backend.utils as utils
+import working.configuration.config as config
 import os
 import logging
 
@@ -25,7 +25,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(logname, mode='a'),  # Use your custom location
-        logging.StreamHandler() # Also log but to terminal
+        # logging.StreamHandler() # Also log but to terminal
     ]
 )
 logger = logging.getLogger(__name__)

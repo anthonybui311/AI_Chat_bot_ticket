@@ -1,11 +1,9 @@
 import requests
 import logging
 import time
-from dotenv import load_dotenv #type: ignore
-from typing import Optional, Dict, Any, List, Union
+from dotenv import load_dotenv 
+from typing import Optional, Dict, Any, List 
 import os
-import json
-from datetime import datetime
 
 # Load environment variables
 load_dotenv()

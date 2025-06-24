@@ -2,18 +2,18 @@ import json
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, Tuple, List
-from dotenv import load_dotenv #type: ignore
+from dotenv import load_dotenv 
 
 # LangChain imports
-from langchain_groq import ChatGroq #type: ignore
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder #type: ignore
-from langchain_core.messages import HumanMessage, AIMessage #type: ignore
+from langchain_groq import ChatGroq 
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder 
+from langchain_core.messages import HumanMessage, AIMessage 
 
 # Internal imports
-import configuration.config as config
-import backend.creating_part.create as create_module
-import backend.editing_part.edit as edit_module
-import backend.api_call as api
+import working.configuration.config as config
+import working.backend.creating_part.create as create_module
+import working.backend.editing_part.edit as edit_module
+import working.backend.api_call as api
 
 # Load environment variables
 load_dotenv()
@@ -258,7 +258,7 @@ def create_llm() -> ChatGroq:
     """Create optimized LLM instance with error handling"""
     try:
         llm = ChatGroq(
-            model_name=config.MODEL_NAME,
+            model=config.MODEL_NAME,
             temperature=config.TEMPERATURE,
             max_tokens=config.MAX_TOKENS,
             # model_kwargs={"service_tier": "auto"},

@@ -3,9 +3,9 @@ from typing import Dict, Any, Tuple, List, Optional
 from datetime import datetime
 
 # Internal imports
-import backend.utils as utils
-import configuration.config as config
-import backend.api_call as api
+import working.backend.utils as utils
+import working.configuration.config as config
+import working.backend.api_call as api
 
 # Configure module logger
 logger = logging.getLogger(__name__)
