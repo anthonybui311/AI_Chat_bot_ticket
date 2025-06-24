@@ -743,7 +743,7 @@ UPDATING_TICKET_CONTEXT = f"""
 
         NHIỆM VỤ CHÍNH:
         Bước 1: PHÂN TÍCH input để xác định yêu cầu thay đổi
-        Bước 2: Trích xuất thông tin cần cập nhật
+        Bước 2: Trích xuất thông tin cần cập nhật, lúc nào cũng thêm session_id như ví dụ
         Bước 3: Trả về thông tin cập nhật dưới dạng dictionary
 
         CÁC TRƯỜNG HỢP XỬ LÝ:
@@ -753,7 +753,8 @@ UPDATING_TICKET_CONTEXT = f"""
         Phản hồi:
         {{
         "response": {{
-        "summary": "máy in không in được màu"
+        "summary": "máy in không in được màu",
+        "session_id": "1111"
         }},
         "summary": "cập nhật ticket"
         }}
@@ -763,7 +764,8 @@ UPDATING_TICKET_CONTEXT = f"""
         Phản hồi:
         {{
         "response": {{
-        "status": "In Progress"
+        "status": "In Progress",
+        "session_id": "1111"
         }},
         "summary": "cập nhật ticket"
         }}

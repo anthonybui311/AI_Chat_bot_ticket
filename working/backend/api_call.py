@@ -514,14 +514,25 @@ def post_update_ticket(ticket_id: str, update_data: Dict[str, Any]) -> Optional[
         if not api_url:
             logger.error("API endpoint for update_ticket not configured")
             return None
-        # Prepare update payload
-        payload =   {
-                "ticket_num": ticket_id,
-                "ticket_summary": update_data['summary'],
-                "sessionid": update_data['session_id']
-            }
+
+        # Prepare update payload - only include keys that exist in update_data
+        payload = {"ticket_num": ticket_id}
+        
+        # Map update_data keys to API payload keys
+        field_mapping = {
+            'summary': 'ticket_summary',
+            'status': 'status',
+            'session_id': 'sessionid'
+        }
+        
+        # Only add fields that exist in update_data
+        for update_key, api_key in field_mapping.items():
+            if update_key in update_data:
+                payload[api_key] = update_data[update_key]
 
         logger.info(f"Updating ticket {ticket_id} with data: {update_data}")
+        logger.info(f"API payload: {payload}")
+        
         response_data = make_api_request(api_url, method='POST', json=payload)
 
         if response_data and response_data.get('response_code') == STATUS_SUCCESS:
@@ -534,6 +545,7 @@ def post_update_ticket(ticket_id: str, update_data: Dict[str, Any]) -> Optional[
     except Exception as e:
         logger.error(f"Error updating ticket {ticket_id}: {e}")
         return None
+
 
 # =====================================================
 # MAIN FUNCTION FOR TESTING
@@ -577,7 +589,7 @@ def main():
     update_data = {
         "ticket_num": "2709798",
         "summary": "máy in hết mực",
-        "session_id": "48917912"
+        "session_id": "1111"
     }
     updated_ticket = post_update_ticket(update_data['ticket_num'], update_data)
     print(f"Updated Ticket: {updated_ticket}")
