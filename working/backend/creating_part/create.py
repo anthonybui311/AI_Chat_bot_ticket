@@ -24,25 +24,11 @@ FIELD_TRANSLATION = {
 
 # Required fields for ticket creation
 REQUIRED_TICKET_FIELDS = ['serial_number', 'device_type', 'problem_description']
-
-# Device type mappings for normalization
-DEVICE_TYPE_MAPPINGS = {
-    'máy in': 'printer',
-    'máy tính': 'computer',
-    'laptop': 'laptop',
-    'điện thoại': 'phone',
-    'router': 'router',
-    'máy chiếu': 'projector',
-    'điều hòa': 'air_conditioner'
-}
-
-
 # =====================================================
 # MAIN STAGE HANDLER
 # =====================================================
 
-def handle_create_stage(response_text, summary: str, user_input: str, 
-                       chain, chat_history, stage_manager) -> Tuple[str, str]:
+def handle_create_stage(response_text, summary: str, stage_manager) -> Tuple[str, str]:
     """
     OPTIMIZED: Comprehensive create stage handler with complete workflow
     
@@ -122,12 +108,19 @@ def _handle_confirmation_correct(stage_manager) -> Tuple[str, str]:
 def _handle_confirmation_wrong(stage_manager) -> Tuple[str, str]:
     """Handle when user says ticket information is wrong"""
     try:
-        stage_manager.clear_ticket_data()
-        logger.info("User indicated wrong information - clearing data")
-        
-        response = ("Cảm ơn bạn đã phản hồi. Vui lòng cung cấp lại thông tin "
-                   "chính xác để mình tạo ticket mới cho bạn.")
-        return response, "tạo ticket"
+        stored_ticket_data = stage_manager.get_stored_ticket_data()
+        if stored_ticket_data:
+            stage_manager.clear_ticket_data()
+            logger.info("User indicated wrong information - clearing data")
+            response = ("Cảm ơn bạn đã phản hồi. Vui lòng cung cấp lại thông tin "
+                       "chính xác để mình tạo ticket mới cho bạn.")
+            return response, "tạo ticket"
+        else:
+            logger.warning("No ticket data found for confirmation")
+            response = ("Cảm ơn bạn! Tuy nhiên mình cần bạn cung cấp thông tin cụ thể "
+                       "để tạo ticket: S/N hoặc ID thiết bị và nội dung sự cố. "
+                       "Ví dụ: '12345, máy in hỏng'")
+            return response, "tạo ticket"
         
     except Exception as e:
         logger.error(f"Error handling confirmation wrong: {e}")
@@ -164,7 +157,7 @@ def _handle_unexpected_response() -> Tuple[str, str]:
 def _handle_creation_error(error: Exception) -> Tuple[str, str]:
     """Handle creation stage errors"""
     error_message = f"Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu tạo ticket: {error}"
-    return error_message, "tạo ticket"
+    return error_message, "thoát"
 
 
 # =====================================================
@@ -220,7 +213,7 @@ def _normalize_ticket_data(ticket_data: Dict[str, Any]) -> Dict[str, Any]:
         
         # Normalize device type
         device_type = ticket_data.get('device_type', '').strip().lower()
-        normalized['device_type'] = DEVICE_TYPE_MAPPINGS.get(device_type, device_type)
+        normalized['device_type'] = device_type
         
         # Normalize problem description
         problem = ticket_data.get('problem_description', '').strip()
@@ -339,10 +332,6 @@ def validate_ticket_data(ticket_data: Dict[str, Any]) -> Tuple[bool, List[str]]:
         Tuple of (is_valid, missing_fields)
     """
     try:
-        if not isinstance(ticket_data, dict):
-            logger.warning("Ticket data is not a dictionary")
-            return False, REQUIRED_TICKET_FIELDS.copy()
-        
         missing_fields = []
         
         for field in REQUIRED_TICKET_FIELDS:
@@ -353,12 +342,6 @@ def validate_ticket_data(ticket_data: Dict[str, Any]) -> Tuple[bool, List[str]]:
                 missing_fields.append(field)
                 continue
             
-            # Additional field-specific validation
-            is_valid, error_msg = utils.validate_input(str(value), field)
-            if not is_valid:
-                logger.warning(f"Validation failed for {field}: {error_msg}")
-                missing_fields.append(field)
-        
         is_complete = len(missing_fields) == 0
         
         logger.info(f"Ticket validation - Complete: {is_complete}, Missing: {missing_fields}")
@@ -393,7 +376,7 @@ def format_ticket_confirmation(ticket_data: Dict[str, Any]) -> str:
 • Nội dung sự cố: {problem_description}
 
 Thông tin này có chính xác không ạ?
-(Trả lời 'đúng' để xác nhận hoặc 'sai' để nhập lại)"""
+(Trả lời 'đúng' để xác nhận hoặc 'sai' để nhập lại, hoặc nhập lại thông tin cần sửa)"""
 
         logger.debug("Ticket confirmation formatted")
         return confirmation_text
@@ -406,7 +389,6 @@ Thông tin này có chính xác không ạ?
 # =====================================================
 # DATABASE AND API INTEGRATION
 # =====================================================
-
 def check_ticket_on_database(ticket_data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     OPTIMIZED: Check ticket against database with enhanced error handling
@@ -457,7 +439,7 @@ def get_existing_tickets_for_device(serial_number: str) -> List[Dict[str, Any]]:
             return []
         
         logger.info(f"Getting existing tickets for serial: {serial_number}")
-        
+        #TODO
         existing_tickets = api.get_all_ticket_for_sn(serial_number)
         
         if existing_tickets:
@@ -471,82 +453,391 @@ def get_existing_tickets_for_device(serial_number: str) -> List[Dict[str, Any]]:
         logger.error(f"Error getting existing tickets: {e}")
         return []
 
-
 # =====================================================
-# HELPER FUNCTIONS
+# TICKET PROCESSING FUNCTIONS (MERGED AND OPTIMIZED)
 # =====================================================
 
-def extract_ticket_info_from_text(text: str) -> Dict[str, Any]:
-    """
-    OPTIMIZED: Extract ticket information from free text
-    
-    Args:
-        text: User input text
+def _process_ticket_creation(ticket_data: Dict[str, Any], stage_manager) -> Tuple[str, str]:
+    """Process ticket creation with CI data checking"""
+    try:
+        ci_data = check_ticket_on_database(ticket_data)
         
-    Returns:
-        Dictionary with extracted ticket information
+        if not ci_data:
+            # No CI data found - create ticket directly
+            return _create_ticket_directly(ticket_data)
+        elif len(ci_data) == 1:
+            # Single CI data found - process accordingly
+            return _handle_single_ci_data_processing(ci_data[0], ticket_data, stage_manager)
+        elif len(ci_data) > 1:
+            # Multiple CI data found - ask user to clarify
+            stage_manager.store_ci_data(ci_data)
+            stage_manager.switch_stage('multiple_ci_data')
+            return _handle_multiple_ci_data_display(ci_data)
+        else:
+            return _handle_ticket_creation_error()
+
+    except Exception as e:
+        logger.error(f"Error processing ticket creation: {e}")
+        return _handle_ticket_creation_error()
+
+def _handle_single_ci_data_processing(ci_data: Dict[str, Any], ticket_data: Dict[str, Any], stage_manager) -> Tuple[str, str]:
+    """
+    MERGED FUNCTION: Process single CI data (combines both previous functions)
+    This function handles the core logic for processing a single CI data record
     """
     try:
-        ticket_info = {
-            'serial_number': '',
-            'device_type': '',
-            'problem_description': ''
-        }
+        serial_number = ci_data.get('SerialNum', ci_data.get('serial_number', ''))
+        device_name = ci_data.get('Name', ci_data.get('name', 'Unknown Device'))
         
-        # Simple extraction logic (can be enhanced with NLP)
-        words = text.lower().split()
+        logger.info(f"Processing single CI data for S/N: {serial_number}")
         
-        # Look for potential serial numbers (numbers/alphanumeric strings)
-        for word in words:
-            if len(word) >= 4 and (word.isalnum() or '-' in word or '_' in word):
-                if not ticket_info['serial_number']:
-                    ticket_info['serial_number'] = word
-                    break
+        # Check for existing tickets
+        existing_tickets = api.get_all_ticket_for_sn(serial_number)
         
-        # Look for device types
-        for device_vn, device_en in DEVICE_TYPE_MAPPINGS.items():
-            if device_vn in text.lower():
-                ticket_info['device_type'] = device_en
-                break
-        
-        # Use remaining text as problem description
-        problem_keywords = ['hỏng', 'lỗi', 'không hoạt động', 'chậm', 'không khởi động']
-        for keyword in problem_keywords:
-            if keyword in text.lower():
-                ticket_info['problem_description'] = f"Thiết bị {keyword}"
-                break
-        
-        logger.debug(f"Extracted ticket info: {ticket_info}")
-        return ticket_info
-        
+        if existing_tickets:
+            # Check ticket statuses
+            active_tickets = []
+            for ticket in existing_tickets:
+                status = ticket.get('status', '').lower()
+                if status not in ['resolved', 'closed', 'cancelled']:
+                    active_tickets.append(ticket)
+            
+            if active_tickets:
+                # Has active tickets - ask user for confirmation
+                ticket_list = []
+                for ticket in active_tickets[:3]:  # Show max 3 tickets
+                    ticket_id = ticket.get('ticketid', 'N/A')
+                    status = ticket.get('status', 'N/A')
+                    summary = ticket.get('summary', 'No summary')[:50] + "..." if len(ticket.get('summary', '')) > 50 else ticket.get('summary', 'No summary')
+                    ticket_list.append(f"#{ticket_id} ({status}): {summary}")
+                
+                tickets_text = "\n".join([f"• {ticket}" for ticket in ticket_list])
+                
+                response_text = f"""⚠️ Thiết bị "{device_name}" (S/N: {serial_number}) đã có ticket đang hoạt động:
+
+{tickets_text}
+
+Bạn có chắc chắn muốn tạo ticket mới không?
+- Nhập 'có' hoặc 'tạo' để tạo ticket mới
+- Nhập 'không' để hủy"""
+                
+                # Store data and switch to single CI data stage
+                stage_manager.store_ci_data([ci_data])
+                stage_manager.switch_stage('1_ci_data')
+                return response_text, "1_ci_data"
+            else:
+                # All tickets are resolved/closed - create new ticket
+                return _create_ticket_with_ci_data(ticket_data, ci_data, stage_manager)
+        else:
+            # No existing tickets - create new one
+            return _handle_ticket_creation_error()
+
     except Exception as e:
-        logger.error(f"Error extracting ticket info from text: {e}")
-        return {'serial_number': '', 'device_type': '', 'problem_description': ''}
+        logger.error(f"Error processing single CI data: {e}")
+        return _handle_ticket_creation_error()
 
-
-def create_ticket_summary(ticket_data: Dict[str, Any]) -> Dict[str, Any]:
+def _handle_multiple_ci_data_display(ci_data_list: List[Dict[str, Any]]) -> Tuple[str, str]:
     """
-    OPTIMIZED: Create a summary of ticket information
-    
-    Args:
-        ticket_data: Ticket data dictionary
-        
-    Returns:
-        Ticket summary dictionary
+    OPTIMIZED: Display multiple CI data with user clarification
     """
     try:
-        summary = {
-            'created_at': datetime.now().isoformat(),
-            'serial_number': ticket_data.get('serial_number', ''),
-            'device_type': ticket_data.get('device_type', ''),
-            'problem_description': ticket_data.get('problem_description', ''),
-            'validation_status': 'pending',
-            'data_completeness': 'complete' if validate_ticket_data(ticket_data)[0] else 'incomplete'
-        }
+        ci_info = []
+        for i, ci in enumerate(ci_data_list[:5], 1):  # Show max 5 CIs
+            serial = ci.get('SerialNum', ci.get('serial_number', 'N/A'))
+            name = ci.get('Name', ci.get('name', 'N/A'))
+            location = ci.get('Location', ci.get('location', ''))
+            
+            location_text = f" - {location}" if location else ""
+            ci_info.append(f"{i}. {name} (S/N: {serial}){location_text}")
+
+        ci_list_text = "\n".join(ci_info)
         
-        logger.debug(f"Created ticket summary: {summary}")
-        return summary
-        
+        response = f"""🔍 Tìm thấy nhiều thiết bị với thông tin tương tự:
+
+{ci_list_text}
+
+Vui lòng cung cấp Serial Number chính xác để tạo ticket.
+Ví dụ: '{ci_data_list[0].get('SerialNum', '123456')}' hoặc 'không' để hủy"""
+
+        return response, "multiple_ci_data"
+
     except Exception as e:
-        logger.error(f"Error creating ticket summary: {e}")
-        return {}
+        logger.error(f"Error displaying multiple CI data: {e}")
+        return _handle_ticket_creation_error()
+
+def _create_ticket_directly(ticket_data: Dict[str, Any]) -> Tuple[str, str]:
+    """Create ticket directly when no CI conflicts"""
+    try:
+        summary = ticket_data['device_type'] + " " + ticket_data['problem_description'] if ticket_data['device_type'] not in ticket_data['problem_description'] else ticket_data['problem_description']
+        ticket_id = api.post_create_ticket((ticket_data['serial_number']), summary)
+        
+        if ticket_id:
+            response_text = f"✅ Ticket đã được tạo thành công! Mã ticket: {ticket_id}. Cảm ơn bạn đã liên hệ!"
+            logger.info(f"Ticket created successfully: {ticket_id}")
+            return response_text, "thoát"
+        else:
+            return _handle_ticket_creation_error()
+
+    except Exception as e:
+        logger.error(f"Error creating ticket: {e}")
+        return _handle_ticket_creation_error()
+
+def _create_ticket_with_ci_data(ticket_data: Dict[str, Any], ci_data: Dict[str, Any], stage_manager) -> Tuple[str, str]:
+    """
+    OPTIMIZED: Create ticket with CI data information
+    """
+    try:
+        serial_number = ci_data.get('SerialNum', ci_data.get('serial_number', ticket_data.get('serial_number', '')))
+        device_name = ci_data.get('Name', ci_data.get('name', 'Unknown Device'))
+        
+        logger.info(f"Creating ticket for device: {device_name} (S/N: {serial_number})")
+        
+        # Create ticket via API
+        ticket_id = api.post_create_ticket(serial_number, ticket_data.get('problem_description', 'N/A'))
+        
+        if ticket_id:
+            response_text = f"""✅ Ticket đã được tạo thành công!
+
+📋 Thông tin ticket:
+• Mã ticket: {ticket_id}
+• Thiết bị: {device_name}   
+• Serial Number: {serial_number}
+• Mô tả sự cố: {ticket_data.get('problem_description', 'N/A')}
+
+Cảm ơn bạn đã liên hệ! Ticket sẽ được xử lý sớm nhất."""
+            
+            logger.info(f"Ticket created successfully: {ticket_id}")
+            stage_manager.reset_to_main()
+            return response_text, "thoát"
+        else:
+            return _handle_ticket_creation_error()
+
+    except Exception as e:
+        logger.error(f"Error creating ticket with CI data: {e}")
+        return _handle_ticket_creation_error()
+
+def _handle_ticket_creation_error() -> Tuple[str, str]:
+    """Handle ticket creation errors"""
+    response_text = "❌ Rất xin lỗi, hệ thống gặp sự cố và không thể tạo ticket. Vui lòng thử lại sau. Cảm ơn bạn!"
+    return response_text, "thoát"
+
+def _handle_cancel_ticket_creation() -> Tuple[str, str]:
+    """Handle cancellation of ticket creation"""
+    response_text = "Mình đã thực hiện hủy yêu cầu tạo phiếu của bạn rồi ạ. Cảm ơn bạn đã liên hệ, chào tạm biệt bạn!"
+    return response_text, "thoát"
+
+# =====================================================
+# UPDATE HANDLING FUNCTIONS
+# =====================================================
+
+def _update_ticket_data(stage_manager, update_data, summary) -> Tuple[str, str]:
+    """Update ticket data with new information"""
+    try:
+        current_ticket_data = stage_manager.get_stored_ticket_data()
+        if not current_ticket_data:
+            logger.error("No ticket data found for update")
+            return "Không tìm thấy thông tin ticket để cập nhật.", "thoát"
+
+        # Update ticket data
+        updated_ticket_data = update_ticket_data(current_ticket_data, update_data)
+        stage_manager.store_ticket_data(updated_ticket_data)
+
+        # Create new confirmation response
+        confirmation_response = format_ticket_confirmation(updated_ticket_data)
+        logger.info("Ticket data updated successfully")
+        
+        #TODO: fix this
+        # Switch back to confirmation stage
+        stage_manager.switch_stage('create')
+        return utils._handle_create_stage_routing(stage_manager, confirmation_response, "chờ xác nhận")
+
+    except Exception as e:
+        logger.error(f"Error updating ticket data: {e}")
+        return "Có lỗi xảy ra khi cập nhật thông tin.", "error"
+
+def update_ticket_data(current_data: Dict[str, Any], update_data) -> Dict[str, Any]:
+    """
+    OPTIMIZED: Update ticket data with new values
+    """
+    try:
+        updated_data = current_data.copy()
+        
+        if isinstance(update_data, dict):
+            if "field_to_update" in update_data and "new_value" in update_data:
+                # Single field update
+                field = update_data["field_to_update"]
+                value = update_data["new_value"]
+                if field in ['serial_number', 'device_type', 'problem_description']:
+                    updated_data[field] = value
+                    logger.info(f"Updated {field}: {current_data.get(field, 'N/A')} → {value}")
+            else:
+                # Multiple field updates
+                for key, value in update_data.items():
+                    if key in ['serial_number', 'device_type', 'problem_description']:
+                        updated_data[key] = value
+                        logger.info(f"Updated {key}: {current_data.get(key, 'N/A')} → {value}")
+
+        return updated_data
+
+    except Exception as e:
+        logger.error(f"Error updating ticket data: {e}")
+        return current_data
+    
+
+
+def _handle_confirmation_stage(stage_manager, response_text, summary: str) -> Tuple[str, str]:
+    """
+    OPTIMIZED: Handle confirmation stage with full update capability
+    """
+    try:
+        logger.info(f"Confirmation stage - Summary: {summary}")
+
+        # Handle update requests
+        update_keywords = ['cập nhật', 'sửa', 'thay đổi', 'đổi', 'chỉnh sửa', 'thành']
+        if isinstance(response_text, dict):
+            stage_manager.switch_stage('update_confirmation')
+            return _handle_update_confirmation_stage(stage_manager, response_text, summary)
+        # Handle confirmation actions
+        if summary == 'đúng':
+            stage_manager.switch_stage('correct')
+            return _handle_correct_stage(stage_manager, response_text, 'đang xử lý')
+        elif summary == 'sai':
+            stage_manager.switch_stage('create')
+            stage_manager.clear_ticket_data()
+            return response_text, "tạo ticket"
+        elif summary == 'thoát':
+            stage_manager.reset_to_main()
+            return response_text, "thoát"
+        else:
+            return response_text, "chờ xác nhận"
+
+    except Exception as e:
+        logger.error(f"Error in confirmation stage: {e}")
+        error_response = f"Xin lỗi, có lỗi xảy ra trong quá trình xác nhận: {e}"
+        return error_response, "error"
+
+def _handle_update_confirmation_stage(stage_manager, response_text, summary: str) -> Tuple[str, str]:
+    """Handle update confirmation stage"""
+    try:
+        if summary == 'cập nhật thông tin':
+            # Update ticket data and return to confirmation
+            return _update_ticket_data(stage_manager, response_text, summary)
+        elif summary == 'thoát':
+            stage_manager.reset_to_main()
+            return response_text, "thoát"
+        else:
+            return response_text, summary
+
+    except Exception as e:
+        logger.error(f"Error in update confirmation stage: {e}")
+        return "Có lỗi xảy ra khi cập nhật thông tin.", "error"
+
+
+
+def _handle_correct_stage(stage_manager, response_text, summary: str) -> Tuple[str, str]:
+    """
+    OPTIMIZED: Handle correct stage (ticket processing)
+    """
+    try:
+        logger.info(f"Correct stage - Summary: {summary}")
+        
+        if summary == 'đang xử lý':
+            ticket_data = stage_manager.get_stored_ticket_data()
+            if ticket_data:
+                return _process_ticket_creation(ticket_data, stage_manager)
+            else:
+                return _handle_ticket_creation_error()
+        elif summary == 'hoàn thành':
+            stage_manager.reset_to_main()
+            return response_text, "ticket đã được tạo"
+        elif summary == 'thoát':
+            stage_manager.reset_to_main()
+            return response_text, summary
+        else:
+            return response_text, summary
+
+    except Exception as e:
+        logger.error(f"Error in correct stage: {e}")
+        error_response = f"Xin lỗi, có lỗi xảy ra trong quá trình xử lý ticket: {e}"
+        return error_response, "error"
+
+def _handle_single_ci_data_stage(stage_manager, response_text, summary: str) -> Tuple[str, str]:
+    """
+    MERGED FUNCTION: Handle single CI data stage (formerly _handle_one_ci_data_stage)
+    This function handles both single CI data scenarios and user confirmation for ticket creation
+    """
+    try:
+        logger.info(f"Single CI data stage - Summary: {summary}")
+        
+        if summary == 'tạo':
+            # User wants to create ticket - proceed with creation
+            ticket_data = stage_manager.get_stored_ticket_data()
+            ci_data = stage_manager.get_stored_ci_data()
+            
+            if ticket_data and ci_data:
+                return _create_ticket_with_ci_data(ticket_data, ci_data[0], stage_manager)
+            else:
+                return _handle_ticket_creation_error()
+                
+        elif summary == 'Không tạo':
+            # User doesn't want to create ticket
+            stage_manager.reset_to_main()
+            return _handle_cancel_ticket_creation()
+            
+        elif summary == 'thoát':
+            stage_manager.reset_to_main()
+            return response_text, "thoát"
+            
+        else:
+            return response_text, summary
+
+    except Exception as e:
+        logger.error(f"Error in single CI data stage: {e}")
+        return _handle_ticket_creation_error()
+
+def _handle_multiple_ci_data_stage(stage_manager, response_text, summary: str) -> Tuple[str, str]:
+    """
+    OPTIMIZED: Handle multiple CI data stage
+    """
+    try:
+        logger.info(f"Multiple CI data stage - Summary: {summary}")
+        
+        if summary == 'kiểm tra serial number':
+            # User provided a specific serial number
+            serial_number = response_text  # The AI should return the serial number
+            ci_data_list = stage_manager.get_stored_ci_data()
+            
+            if ci_data_list:
+                # Find matching CI data
+                selected_ci = None
+                for ci in ci_data_list:
+                    if ci.get('SerialNum') == serial_number or ci.get('serial_number') == serial_number:
+                        selected_ci = ci
+                        break
+                
+                if selected_ci:
+                    ticket_data = stage_manager.get_stored_ticket_data()
+                    if ticket_data:
+                        return _handle_single_ci_data_processing(selected_ci, ticket_data, stage_manager)
+                    else:
+                        return _handle_ticket_creation_error()
+                else:
+                    return "Serial number không tìm thấy trong danh sách. Vui lòng chọn lại.", "multiple_ci_data"
+            else:
+                return _handle_ticket_creation_error()
+                
+        elif summary == 'Không tạo':
+            # User doesn't want to create ticket
+            stage_manager.reset_to_main()
+            return _handle_cancel_ticket_creation()
+            
+        elif summary == 'thoát':
+            stage_manager.reset_to_main()
+            return response_text, "thoát"
+            
+        else:
+            return response_text, summary
+
+    except Exception as e:
+        logger.error(f"Error in multiple CI data stage: {e}")
+        return _handle_ticket_creation_error()

@@ -8,17 +8,28 @@ import backend.editing_part.edit as edit_module
 import backend.creating_part.create as create_module
 import backend.utils as utils
 import configuration.config as config
+import os
+import logging
 
-# Configure logging
+
+log_directory = config.LOG_DIRECTORY
+
+# Ensure the directory exists
+
+os.makedirs(log_directory, exist_ok=True)
+
+logname = os.path.join(log_directory, f"chatbot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+# Configure logging with custom location
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('chatbot.log'),
-        logging.StreamHandler()
+        logging.FileHandler(logname, mode='a'),  # Use your custom location
+        logging.StreamHandler() # Also log but to terminal
     ]
 )
 logger = logging.getLogger(__name__)
+
 
 
 class ChatbotSession:
@@ -82,16 +93,13 @@ class ChatbotSession:
             Tuple of (response, summary)
         """
         try:
-            # Check for special confirmation update case
-            if (self.stage_manager.is_in_confirmation_stage() and
-                self._is_update_request(user_input)):
-                return utils.handle_update_confirmation_direct(
-                    self.stage_manager, user_input, self.chain, self.chat_history
-                )
-            
             # Get context for current stage
             current_context = self.stage_manager.get_current_context()
             
+            if (self.stage_manager.is_in_confirmation_stage() and self._is_update_request(user_input)):
+                current_context = config.UPDATE_CONFIRMATION_CONTEXT
+                
+                
             # Process through AI chain
             response_text, summary = utils.get_response(
                 chain=self.chain,
@@ -105,6 +113,7 @@ class ChatbotSession:
                 self.stage_manager, response_text, summary, 
                 user_input, self.chain, self.chat_history
             )
+
             
             return final_response, final_summary
             
@@ -115,7 +124,7 @@ class ChatbotSession:
     
     def _is_update_request(self, user_input: str) -> bool:
         """Check if input is an update request"""
-        update_keywords = ['đổi', 'thay', 'sửa', 'thành']
+        update_keywords = ['cập nhật', 'sửa', 'thay đổi', 'đổi', 'chỉnh sửa', 'thành']
         return any(keyword in user_input.lower() for keyword in update_keywords)
     
     def display_response(self, response: str) -> None:
@@ -217,9 +226,5 @@ def start() -> None:
         print(f"❌ Lỗi nghiêm trọng: {e}")
         sys.exit(1)
     
-    finally:
-        print("\nCảm ơn bạn đã sử dụng dịch vụ!")
-
-
 if __name__ == "__main__":
     start()
