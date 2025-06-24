@@ -119,6 +119,10 @@ class StageManager:
         """Check if currently in confirmation stage"""
         return self.current_stage == self.STAGE_CONFIRMATION
 
+    def is_in_edit_confirmation_stage(self) -> bool:
+        """Check if currently in edit confirmation stage"""
+        return self.current_stage == self.STAGE_EDIT_CONFIRMATION
+
     def is_in_correct_stage(self) -> bool:
         """Check if currently in correct stage"""
         return self.current_stage == self.STAGE_CORRECT
@@ -322,7 +326,6 @@ def get_response(chain, chat_history: ChatHistory, question: str, context: str =
         error_message = f"Xin lỗi, có lỗi xảy ra: {e}"
         return error_message, "error"
 
-#TODO: fix this for the edit stage
 def route_to_stage(stage_manager: StageManager, response_text, summary: str,
                    user_input: str, chain, chat_history: ChatHistory) -> Tuple[str, str]:
     """
@@ -368,9 +371,9 @@ def route_to_stage(stage_manager: StageManager, response_text, summary: str,
         elif stage_manager.current_stage == 'updating_ticket':
             return edit_module.handle_updating_ticket_stage(stage_manager, response_text, summary)
 
-        #TODO: fix this for the edit stage
-        # elif stage_manager.current_stage == 'edit_confirmation':  
-        #     return edit_module.handle_edit_confirmation_stage(stage_manager, response_text, summary)
+
+        elif stage_manager.current_stage == 'edit_confirmation':  
+            return edit_module.handle_edit_confirmation_stage(stage_manager, response_text, summary)
 
 
         # Fallback

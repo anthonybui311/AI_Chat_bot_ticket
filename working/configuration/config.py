@@ -730,7 +730,6 @@ MULTIPLE_CI_DATA_CONTEXT = f"""
 
         """
 
-#TODO: fix this for the edit stage
 UPDATING_TICKET_CONTEXT = f"""
         {RESPONSE_FORMAT_INSTRUCTION}
 
@@ -743,7 +742,7 @@ UPDATING_TICKET_CONTEXT = f"""
 
         NHIỆM VỤ CHÍNH:
         Bước 1: PHÂN TÍCH input để xác định yêu cầu thay đổi
-        Bước 2: Trích xuất thông tin cần cập nhật
+        Bước 2: Trích xuất thông tin cần cập nhật, lúc nào cũng thêm session_id như ví dụ
         Bước 3: Trả về thông tin cập nhật dưới dạng dictionary
 
         CÁC TRƯỜNG HỢP XỬ LÝ:
@@ -753,7 +752,8 @@ UPDATING_TICKET_CONTEXT = f"""
         Phản hồi:
         {{
         "response": {{
-        "summary": "máy in không in được màu"
+        "summary": "máy in không in được màu",
+        "session_id": "1111"
         }},
         "summary": "cập nhật ticket"
         }}
@@ -763,7 +763,8 @@ UPDATING_TICKET_CONTEXT = f"""
         Phản hồi:
         {{
         "response": {{
-        "status": "In Progress"
+        "status": "In Progress",
+        "session_id": "1111"
         }},
         "summary": "cập nhật ticket"
         }}
@@ -834,11 +835,11 @@ EDIT_CONFIRMATION_CONTEXT = f"""
         Phản hồi:
         {{
         "response": "Cảm ơn bạn đã phản hồi. Vui lòng cho biết thông tin chính xác bạn muốn cập nhật.",
-        "summary": "sai
+        "summary": "sai"
         }}
 
         3. THOÁT HỆ THỐNG:
-        Từ khóa: "thoát", "exit", "bye", "tạm biệt"
+        Từ khóa: "thoát", "exit", "bye", "tạm biệt", "hủy", "quit"
         Phản hồi:
         {{
         "response": "Cảm ơn bạn đã sử dụng dịch vụ. Chào tạm biệt!",
