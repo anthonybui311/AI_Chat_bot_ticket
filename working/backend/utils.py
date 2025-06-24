@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any, Tuple, List
 import os
 from dotenv import load_dotenv
-from dotenv import load_dotenv
 
 # LangChain imports
 from langchain_groq import ChatGroq 
