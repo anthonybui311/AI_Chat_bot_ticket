@@ -98,9 +98,6 @@ class ChatbotSession:
             
             if (self.stage_manager.is_in_confirmation_stage() and self._is_update_request(user_input)):
                 current_context = config.UPDATE_CONFIRMATION_CONTEXT
-            
-            if (self.stage_manager.is_in_edit_confirmation_stage() and self._is_update_request(user_input)):
-                current_context = config.EDIT_CONFIRMATION_CONTEXT
                 
                 
             # Process through AI chain
