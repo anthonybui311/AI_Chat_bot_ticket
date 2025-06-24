@@ -173,7 +173,7 @@ def handle_updating_ticket_stage(response_text, summary: str, stage_manager) -> 
         Tuple of (final_response, final_summary)
     """
     try:
-        logger.info(f"Updating ticket stage - Response type: {type(response_text)}, Summary: {summary}")
+        logger.info(f"Updating ticket stage - Response type: {type(response_text)}, Ticket info: {summary}")
         
         # Case 1: Exit system
         if summary == 'thoát':

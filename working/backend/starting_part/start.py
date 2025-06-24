@@ -25,7 +25,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(logname, mode='a'),  # Use your custom location
-        # logging.StreamHandler() # Also log but to terminal
+        logging.StreamHandler() # Also log but to terminal
     ]
 )
 logger = logging.getLogger(__name__)

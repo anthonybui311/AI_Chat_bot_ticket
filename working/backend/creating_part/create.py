@@ -693,7 +693,6 @@ def _handle_confirmation_stage(stage_manager, response_text, summary: str) -> Tu
         logger.info(f"Confirmation stage - Summary: {summary}")
 
         # Handle update requests
-        update_keywords = ['cập nhật', 'sửa', 'thay đổi', 'đổi', 'chỉnh sửa', 'thành']
         if isinstance(response_text, dict):
             stage_manager.switch_stage('update_confirmation')
             return _handle_update_confirmation_stage(stage_manager, response_text, summary)

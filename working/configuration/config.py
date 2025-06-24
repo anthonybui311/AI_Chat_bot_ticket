@@ -730,7 +730,6 @@ MULTIPLE_CI_DATA_CONTEXT = f"""
 
         """
 
-#TODO: fix this for the edit stage
 UPDATING_TICKET_CONTEXT = f"""
         {RESPONSE_FORMAT_INSTRUCTION}
 
