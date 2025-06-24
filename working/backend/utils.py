@@ -2,13 +2,16 @@ import json
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, Tuple, List
-from dotenv import load_dotenv 
+import os
+from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 # LangChain imports
 from langchain_groq import ChatGroq 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder 
 from langchain_core.messages import HumanMessage, AIMessage 
-
+from pydantic import SecretStr
+    
 # Internal imports
 import working.configuration.config as config
 import working.backend.creating_part.create as create_module
@@ -18,9 +21,11 @@ import working.backend.api_call as api
 # Load environment variables
 load_dotenv()
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 # Configure module logger
 logger = logging.getLogger(__name__)
-
+logger.debug(f"GROQ API Key loaded: {'Present' if GROQ_API_KEY else 'Missing'}")
 
 # =====================================================
 # STAGE MANAGEMENT CLASS
@@ -253,13 +258,23 @@ def create_chat_prompt() -> ChatPromptTemplate:
 def create_llm() -> ChatGroq:
     """Create optimized LLM instance with error handling"""
     try:
-        llm = ChatGroq(
-            model=config.MODEL_NAME,
-            temperature=config.TEMPERATURE,
-            max_tokens=config.MAX_TOKENS,
-            # model_kwargs={"service_tier": "auto"},
-            timeout=30  # Add timeout for better error handling
-        )
+        # Convert API key to SecretStr if it exists
+        api_key = SecretStr(GROQ_API_KEY) if GROQ_API_KEY else None
+        
+        # Create kwargs dict with only supported parameters
+        kwargs = {
+            "model": config.MODEL_NAME,
+            "temperature": config.TEMPERATURE,
+            "max_tokens": config.MAX_TOKENS,
+            "timeout": 30
+        }
+        
+        # Only add api_key if it exists
+        if api_key:
+            kwargs["api_key"] = api_key
+            
+        # Initialize with explicit parameters
+        llm = ChatGroq(**kwargs)
         logger.debug(f"LLM created: {config.MODEL_NAME}")
         return llm
     except Exception as e:
@@ -368,9 +383,8 @@ def route_to_stage(stage_manager: StageManager, response_text, summary: str,
         elif stage_manager.current_stage == 'updating_ticket':
             return edit_module.handle_updating_ticket_stage(stage_manager, response_text, summary)
 
-        #TODO: fix this for the edit stage
-        # elif stage_manager.current_stage == 'edit_confirmation':  
-        #     return edit_module.handle_edit_confirmation_stage(stage_manager, response_text, summary)
+        elif stage_manager.current_stage == 'edit_confirmation':  
+            return edit_module.handle_edit_confirmation_stage(stage_manager, response_text, summary)
 
 
         # Fallback
