@@ -8,7 +8,7 @@ venv/
 env/
 ENV/
 .venv/
-agent_ent/
+chat_env/
 
 # Environment variables and secrets
 .env
