@@ -40,30 +40,6 @@ API_ENDPOINTS = {
 # UTILITY FUNCTIONS
 # =====================================================
 
-def validate_api_config() -> Dict[str, Any]:
-    """
-    OPTIMIZED: Validate API configuration
-    
-    Returns:
-        Dictionary with validation results
-    """
-    validation_result = {
-        'valid': True,
-        'missing_endpoints': [],
-        'warnings': []
-    }
-    
-    for endpoint_name, endpoint_url in API_ENDPOINTS.items():
-        if not endpoint_url:
-            validation_result['missing_endpoints'].append(endpoint_name)
-            validation_result['valid'] = False
-    
-    if validation_result['missing_endpoints']:
-        logger.error(f"Missing API endpoints: {validation_result['missing_endpoints']}")
-    
-    return validation_result
-
-
 def make_api_request(url: str, method: str = 'GET', json: Optional[Dict] = None, 
                     timeout: int = DEFAULT_TIMEOUT, max_retries: int = MAX_RETRY_ATTEMPTS) -> Optional[Dict[str, Any]]:
     """
@@ -290,11 +266,6 @@ def post_create_ticket(serial_number: str, summary: str) -> Optional[str]:
             
         # Handle dictionary response
         if isinstance(response_data, dict):
-            # Validate response structure
-            expected_fields = ['ticket_num', 'response_code', 'message']
-            validation = validate_response_data(response_data, expected_fields)
-            
-            # Extract ticket ID
             ticket_id = response_data.get('ticket_num') or response_data.get('ticketid')
             response_code = response_data.get('response_code', 0)
             message = response_data.get('message', 'Unknown')
@@ -556,14 +527,6 @@ def main():
     OPTIMIZED: Main function for testing API operations
     """
     print("=== API CALL MODULE TESTING ===")
-    
-    # Validate configuration
-    config_validation = validate_api_config()
-    print(f"Configuration validation: {config_validation}")
-    
-    if not config_validation['valid']:
-        print("❌ API configuration invalid. Please check environment variables.")
-        return
     
     # Test CI data retrieval
     print("\n1. Testing CI data retrieval...")
