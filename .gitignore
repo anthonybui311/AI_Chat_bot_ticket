@@ -35,6 +35,8 @@ build/
 
 # Others
 others/
+*.pdf
+*.postman_collection.json
 
 # Cursor
 #  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
