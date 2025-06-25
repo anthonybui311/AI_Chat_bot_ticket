@@ -25,7 +25,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(logname, mode='a'),  # Use your custom location
-        # logging.StreamHandler() # Also log but to terminal
+        logging.StreamHandler() # Also log but to terminal
     ]
 )
 logger = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ class ChatbotSession:
     
     def should_exit(self, user_input: str) -> bool:
         """Check if user wants to exit"""
-        exit_keywords = ['tạm biệt', 'thoát', 'bye', 'exit', 'quit']
+        exit_keywords = ['tạm biệt', 'thoát', 'bye', 'exit', 'quit', "hủy"]
         return user_input.lower() in exit_keywords
     
     def process_user_input(self, user_input: str) -> Tuple[str, str]:
@@ -98,7 +98,8 @@ class ChatbotSession:
             
             if (self.stage_manager.is_in_confirmation_stage() and self._is_update_request(user_input)):
                 current_context = config.UPDATE_CONFIRMATION_CONTEXT
-                
+            
+
                 
             # Process through AI chain
             response_text, summary = utils.get_response(
@@ -110,8 +111,7 @@ class ChatbotSession:
             
             # Route to appropriate stage handler
             final_response, final_summary = utils.route_to_stage(
-                self.stage_manager, response_text, summary, 
-                user_input, self.chain, self.chat_history
+                self.stage_manager, response_text, summary
             )
 
             

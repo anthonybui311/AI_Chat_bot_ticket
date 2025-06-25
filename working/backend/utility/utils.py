@@ -264,13 +264,10 @@ def create_llm() -> ChatGroq:
             "model": config.MODEL_NAME,
             "temperature": config.TEMPERATURE,
             "max_tokens": config.MAX_TOKENS,
-            "timeout": 30
+            "timeout": config.REQUEST_TIMEOUT,
+            "api_key": api_key
         }
         
-        # Only add api_key if it exists
-        if api_key:
-            kwargs["api_key"] = api_key
-            
         # Initialize with explicit parameters
         llm = ChatGroq(**kwargs)
         logger.debug(f"LLM created: {config.MODEL_NAME}")
@@ -335,18 +332,14 @@ def get_response(chain, chat_history: ChatHistory, question: str, context: str =
         error_message = f"Xin lỗi, có lỗi xảy ra: {e}"
         return error_message, "error"
 
-#TODO: fix this for the edit stage
-def route_to_stage(stage_manager: StageManager, response_text, summary: str,
-                   user_input: str, chain, chat_history: ChatHistory) -> Tuple[str, str]:
+
+def route_to_stage(stage_manager: StageManager, response_text, summary: str) -> Tuple[str, str]:
     """
     OPTIMIZED: Enhanced stage routing with comprehensive workflow handling
     Args:
         stage_manager: Stage management object
         response_text: AI response
         summary: Response summary
-        user_input: Original user input
-        chain: LangChain chain
-        chat_history: Chat history
     Returns:
         Tuple of (final_response, final_summary)
     """
@@ -378,10 +371,10 @@ def route_to_stage(stage_manager: StageManager, response_text, summary: str,
         elif stage_manager.current_stage == 'multiple_ci_data':
             return create_module._handle_multiple_ci_data_stage(stage_manager, response_text, summary)
         
-        elif stage_manager.current_stage == 'updating_ticket':
+        elif stage_manager.current_stage == 'updating_ticket' or summary == 'chờ thông tin cập nhật':
             return edit_module.handle_updating_ticket_stage(stage_manager, response_text, summary)
 
-        elif stage_manager.current_stage == 'edit_confirmation':  
+        elif stage_manager.current_stage == 'edit_confirmation' or summary == 'chờ xác nhận cập nhật edit':  
             return edit_module.handle_edit_confirmation_stage(stage_manager, response_text, summary)
 
 

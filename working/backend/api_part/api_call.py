@@ -487,13 +487,12 @@ def post_update_ticket(ticket_id: str, update_data: Dict[str, Any]) -> Optional[
             return None
 
         # Prepare update payload - only include keys that exist in update_data
-        payload = {"ticket_num": ticket_id}
+        payload = {"ticket_num": ticket_id, "sessionid": "1111"}
         
         # Map update_data keys to API payload keys
         field_mapping = {
             'summary': 'ticket_summary',
             'status': 'status',
-            'session_id': 'sessionid'
         }
         
         # Only add fields that exist in update_data

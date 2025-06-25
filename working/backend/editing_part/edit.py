@@ -204,6 +204,10 @@ def handle_updating_ticket_stage(stage_manager, response_text, summary: str) -> 
         
         # Case 3: Response is informational string
         elif isinstance(response_text, str):
+            if summary == 'chờ thông tin cập nhật':
+                response, summary = _display_and_request_update(stage_manager.get_stored_ticket_data()['ticket_info'], stage_manager.get_stored_ticket_data()['ticket_id'])
+                response_text += "\n" + response
+                return response_text, summary
             return _handle_informational_response(response_text, summary)
         
         # Case 4: Fallback
@@ -272,7 +276,7 @@ def _display_update_confirmation(ticket_id: str, update_data: Dict[str, Any]) ->
 Thông tin này có chính xác không?
 (Trả lời 'đúng' để xác nhận hoặc 'sai' để nhập lại)"""
         
-        return response, "chờ xác nhận cập nhật"
+        return response, "chờ xác nhận cập nhật edit"
         
     except Exception as e:
         logger.error(f"Error displaying update confirmation: {e}")
@@ -312,7 +316,7 @@ def handle_edit_confirmation_stage(stage_manager, response_text, summary: str) -
         # Case 4: Unexpected response
         else:
             response = "Vui lòng trả lời 'đúng' để xác nhận hoặc 'sai' để nhập lại thông tin."
-            return response, "chờ xác nhận cập nhật"
+            return response, "chờ xác nhận cập nhật edit"
             
     except Exception as e:
         logger.error(f"Error in edit confirmation stage: {e}")
@@ -467,13 +471,11 @@ def _format_ticket_info(ticket: Dict[str, Any]) -> str:
     try:
         # Extract ticket fields with defaults
         ticket_id = ticket.get('ticketid', ticket.get('id', 'N/A'))
-        session_id = ticket.get('sessionid', 'N/A')
         summary = ticket.get('summary', 'Không có mô tả')
         status = ticket.get('status', 'N/A')
         
         # Build formatted string
         info_parts = f"""• ID: {ticket_id}
-• Session ID: {session_id}
 • Mô tả: {summary}
 • Trạng thái: {status}"""
         
