@@ -1,80 +1,149 @@
 # AI Chat Bot Ticket System
-## Setup Guide
 
-### Prerequisites
+An intelligent chatbot system for managing and handling support tickets using Groq's LLM.
+
+## Overview
+This system provides an AI-powered interface for:
+- Creating new support tickets
+- Editing existing tickets
+- Managing ticket statuses
+- Handling ticket updates and modifications
+
+## Prerequisites
 - Python 3.12 or higher
 - Virtual environment management tool (venv)
-- Git (for version control)
+- Git for version control
+- Groq API key for LLM functionality
 
-### Project Structure
+## Project Structure
 ```
-working/
-├── backend/         # Backend logic and API handlers
-├── chat_env/        # Virtual environment directory
-├── configuration/   # Configuration files
-├── data/           # Data storage
-├── frontend/       # UI components
-├── logs/           # Log files
-├── pipeline/       # Processing pipeline
-└── main.py         # Main application entry point
+AI_Chat_bot_ticket/
+├── main.py                 # Main application entry point
+├── requirements.txt        # Project dependencies
+├── README.md              # Project documentation
+├── others/                # Additional resources
+│   ├── DT-API-Ticket.postman_collection.json
+│   └── Sơ-đồ-kịch-bản-Hỗ-trợ-ticket.pdf
+└── working/              # Main working directory
+    ├── backend/          # Backend logic and API handlers
+    │   ├── api_part      # API interaction handling
+    │   ├── utility       # Utility functions
+    │   ├── creating_part/# Ticket creation logic
+    │   ├── editing_part/ # Ticket editing logic
+    │   └── starting_part/# Initialization logic
+    ├── chat_env/         # Virtual environment
+    ├── configuration/    # Configuration files
+    │   └── config.py     # System configuration
+    ├── data/            # Data storage
+    ├── frontend/        # UI components
+    │   └── UI.py        # User interface
+    ├── logs/           # Log files
+    └── pipeline/       # Processing pipeline
+        └── connecting.py # Pipeline connections
 ```
 
-### Setup Instructions
+## Setup Instructions
 
-1. **Set Python Path**
-   First, you need to set the Python path to include the working directory. Run this command in your terminal:
+1. **Clone the Repository**
    ```bash
+   git clone <repository-url>
+   cd AI_Chat_bot_ticket
+   ```
+
+2. **Set Python Path**
+   ```bash
+   # For macOS/Linux
    export PYTHONPATH="/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket:$PYTHONPATH"
-   ```
    
-   For permanent setup, add this line to your `~/.bashrc` or `~/.zshrc` file.
-
-2. **Virtual Environment Setup**
-   ```bash
-   # Navigate to the project directory
-   cd /Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket
-
-   # Activate the existing virtual environment
-   source working/chat_env/bin/activate
-
-   # If virtual environment doesn't exist, create it:
-   python -m venv working/chat_env
-   source working/chat_env/bin/activate
+   # Add to ~/.zshrc or ~/.bashrc for persistence
+   echo 'export PYTHONPATH="/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket:$PYTHONPATH"' >> ~/.zshrc
    ```
 
-3. **Install Dependencies**
+3. **Virtual Environment Setup**
    ```bash
-   # Make sure you're in the virtual environment (you should see (chat_env) in your terminal)
+   # Create virtual environment if it doesn't exist
+   python -m venv working/chat_env
+   
+   # Activate the virtual environment
+   source working/chat_env/bin/activate  # For macOS/Linux
+   ```
+
+4. **Install Dependencies**
+   ```bash
    pip install -r requirements.txt
    ```
 
-   Key dependencies include:
-   - langchain_groq - For AI/ML functionality
-   - groq - Version 0.4.1
-   - python-dotenv - Version 1.0.0 for environment management
-   - requests - Version 2.32.3 for API calls
-   - streamlit - Version 1.35.0 for frontend
+   Key Dependencies:
+   - langchain_groq - For LLM integration
+   - groq - For API interactions
+   - python-dotenv - For environment management
+   - requests - For API calls
+   - streamlit - For frontend (if applicable)
 
-4. **Environment Variables**
-   Create a `.env` file in the working directory with necessary environment variables (if required).
-
-### Running the Application
-1. Ensure your Python path is set correctly
-2. Activate the virtual environment
-3. Run the main application:
-   ```bash
-   python working/main.py
+5. **Environment Configuration**
+   Create a `.env` file in the project root:
+   ```env
+   GROQ_API_KEY=your_api_key_here
+   LOG_DIRECTORY=/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/logs
+   DATA_PATH=/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data
    ```
 
-### Troubleshooting
-- If you encounter import errors, verify that your PYTHONPATH is set correctly
-- For package-related issues, ensure you're in the virtual environment when installing packages
+## Running the Application
+
+1. **Activate Environment**
+   ```bash
+   source working/chat_env/bin/activate
+   ```
+
+2. **Start the Application**
+   ```bash
+   python main.py
+   ```
+
+## Development Guidelines
+
+### Logging
+- Logs are stored in `working/logs/`
+- Each session creates a new log file
+- Log format: `chatbot_YYYYMMDD_HHMMSS.log`
+- To enable terminal logging, uncomment this line in `working/backend/starting_part/start.py`:
+  ```python
+  # logging.StreamHandler()  # Also log but to terminal
+  ```
+
+### Data Storage
+- Ticket data stored in `working/data/`
+- Chat histories saved as text files
+- Session data maintained during runtime
+
+### Configuration
+- System settings in `configuration/config.py`
+- Environment variables in `.env`
+- API configurations in respective modules
+
+## Troubleshooting
+
+### Common Issues
+1. **Import Errors**
+   - Verify PYTHONPATH is set correctly
+   - Ensure virtual environment is activated
+   - Check package installations
+
+2. **API Errors**
+   - Verify Groq API key is set
+   - Check network connectivity
+   - Review API call logs
+
+3. **Environment Issues**
+   - Confirm Python version (3.12+)
+   - Verify virtual environment activation
+   - Check dependency conflicts
+
+## Support and Documentation
+For additional support:
 - Check the logs directory for detailed error messages
+- Review the configuration files for proper settings
+- Consult the API documentation for integration details
 
-### Notes
-- Always activate the virtual environment before running the application
-- Keep the requirements.txt file updated when adding new dependencies
-- Monitor the logs directory for debugging information
-
-### Support
-For any issues or questions, please refer to the project documentation or contact the development team. 
+## License
+[Your License Here] 
