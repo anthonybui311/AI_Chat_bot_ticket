@@ -4,9 +4,9 @@ from datetime import datetime
 import re
 
 # Internal imports
-import working.backend.utils as utils
+import working.backend.utility.utils as utils   
 import working.configuration.config as config
-import working.backend.api_call as api
+import working.backend.api_part.api_call as api
 
 # Configure module logger
 logger = logging.getLogger(__name__)

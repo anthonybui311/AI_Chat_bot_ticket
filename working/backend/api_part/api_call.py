@@ -1,7 +1,7 @@
 import requests
 import logging
 import time
-from dotenv import load_dotenv 
+from dotenv import load_dotenv #type: ignore
 from typing import Optional, Dict, Any, List 
 import os
 

@@ -6,7 +6,7 @@ from datetime import datetime
 # Internal imports
 import working.backend.editing_part.edit as edit_module
 import working.backend.creating_part.create as create_module
-import working.backend.utils as utils
+import working.backend.utility.utils as utils
 import working.configuration.config as config
 import os
 import logging
@@ -184,6 +184,7 @@ class ChatbotSession:
                 
                 # Check for exit condition
                 if self.should_exit(user_input):
+                    print("\n\nChatbot: Cảm ơn bạn đã sử dụng dịch vụ. Chào tạm biệt!")
                     self._shutdown()
                     break
                 

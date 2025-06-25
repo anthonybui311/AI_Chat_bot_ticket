@@ -13,7 +13,6 @@ REQUEST_TIMEOUT = 30  # seconds
 LOG_DIRECTORY = "/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/logs"  # Log dir path
 # System Configuration
 DATA_PATH = "/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data"
-MAX_RETRY_ATTEMPTS = 3
 
 # =====================================================
 # SHARED CONTEXT COMPONENTS

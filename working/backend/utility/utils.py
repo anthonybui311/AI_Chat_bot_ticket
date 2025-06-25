@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, Tuple, List
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
 
 # LangChain imports
 from langchain_groq import ChatGroq 
@@ -15,7 +15,6 @@ from pydantic import SecretStr
 import working.configuration.config as config
 import working.backend.creating_part.create as create_module
 import working.backend.editing_part.edit as edit_module
-import working.backend.api_call as api
 
 # Load environment variables
 load_dotenv()
