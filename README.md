@@ -9,25 +9,32 @@ This system provides an AI-powered interface for:
 - Managing ticket statuses
 - Handling ticket updates and modifications
 
+The system consists of:
+- FastAPI backend for robust API endpoints and ticket management
+- Streamlit frontend for an intuitive user interface
+- Groq LLM integration for intelligent responses
+
 ## Prerequisites
 - Python 3.12 or higher
 - Virtual environment management tool (venv)
 - Git for version control
 - Groq API key for LLM functionality
+- FastAPI for backend services
+- Streamlit for frontend interface
 
 ## Project Structure
 ```
 AI_Chat_bot_ticket/
-├── main.py                 # Main application entry point
+├── main.py                 # Main application entry point (FastAPI + Streamlit)
 ├── requirements.txt        # Project dependencies
 ├── README.md              # Project documentation
 ├── others/                # Additional resources
-│   ├── DT-API-Ticket.postman_collection.json
-│   └── Sơ-đồ-kịch-bản-Hỗ-trợ-ticket.pdf
 └── working/              # Main working directory
     ├── backend/          # Backend logic and API handlers
-    │   ├── api_part      # API interaction handling
-    │   ├── utility       # Utility functions
+    │   ├── api_part/     # FastAPI routes and endpoints
+    │   │   ├── api_routes.py  # API endpoint definitions
+    │   │   └── api_call.py    # API utility functions
+    │   ├── utility/      # Utility functions
     │   ├── creating_part/# Ticket creation logic
     │   ├── editing_part/ # Ticket editing logic
     │   └── starting_part/# Initialization logic
@@ -35,11 +42,14 @@ AI_Chat_bot_ticket/
     ├── configuration/    # Configuration files
     │   └── config.py     # System configuration
     ├── data/            # Data storage
-    ├── frontend/        # UI components
-    │   └── UI.py        # User interface
-    ├── logs/           # Log files
-    └── pipeline/       # Processing pipeline
-        └── connecting.py # Pipeline connections
+    ├── frontend/        # Streamlit UI components
+    │   ├── app.py       # Main Streamlit application
+    │   ├── pages/       # Streamlit pages
+    │   │   ├── about_us.py     # About page
+    │   │   └── current_chat.py # Chat interface
+    │   └── utils/       # Frontend utilities
+    │       └── api_client.py   # Backend API client
+    └── logs/           # Log files
 ```
 
 ## Setup Instructions
@@ -77,8 +87,10 @@ AI_Chat_bot_ticket/
    - langchain_groq - For LLM integration
    - groq - For API interactions
    - python-dotenv - For environment management
+   - fastapi - For backend API
+   - uvicorn - For ASGI server
+   - streamlit - For frontend interface
    - requests - For API calls
-   - streamlit - For frontend (if applicable)
 
 5. **Environment Configuration**
    Create a `.env` file in the project root:
@@ -99,6 +111,32 @@ AI_Chat_bot_ticket/
    ```bash
    python main.py
    ```
+
+   This will start:
+   - FastAPI backend server (default: http://localhost:8000)
+   - Streamlit frontend interface (default: http://localhost:8501)
+
+   You can access:
+   - Frontend UI: http://localhost:8501
+   - API documentation: http://localhost:8000/docs
+
+## Features
+
+### Frontend (Streamlit)
+- Interactive chat interface
+- Real-time conversation history
+- About page with system information
+- Automatic session management
+- Support for Vietnamese language
+- Exit handling with keywords ("thoát", "tạm biệt", etc.)
+
+### Backend (FastAPI)
+- RESTful API endpoints
+- Ticket management system
+- LLM integration for responses
+- Session handling
+- Logging and monitoring
+- Error handling and validation
 
 ## Development Guidelines
 

@@ -27,7 +27,7 @@ logging.basicConfig(
         logging.FileHandler(logname, mode='a'),  # Use your custom location
         # Uncomment  the following line to log to terminal
     
-        # logging.StreamHandler() # Also log but to terminal
+        logging.StreamHandler() # Also log but to terminal
     ]
 )
 logger = logging.getLogger(__name__)
@@ -99,7 +99,6 @@ class ChatbotSession:
             
             if (self.stage_manager.is_in_confirmation_stage() and self._is_update_request(user_input)):
                 current_context = config.UPDATE_CONFIRMATION_CONTEXT
-            
 
                 
             # Process through AI chain
@@ -131,6 +130,35 @@ class ChatbotSession:
     def display_response(self, response: str) -> None:
         """Display chatbot response with formatting"""
         print(f"\nChatbot: {response}")
+        
+    def handle_special_response_with_ticket_information(self, response: str, summary: str, user_input: str) -> Tuple[str, str]:
+        """
+        Handle special response cases that require immediate action
+        
+        Returns:
+            Tuple[str, str]: A tuple containing (response, summary)
+            If no special case is handled, returns the original response and summary
+        """
+        logger.info(f"Handling special response with ticket information: {summary}")
+        if self.stage_manager.is_in_main_stage():
+            # Handle create stage with ticket information
+            if (summary == 'tạo ticket có thông tin'):
+                current_context = config.CREATE_CONTEXT
+            # Handle edit stage with ticket information
+            elif (summary == 'sửa ticket có thông tin'):
+                current_context = config.EDIT_CONTEXT   
+
+            # Only get new response if we have a matching context
+            if current_context != config.MAIN_CONTEXT:
+                response, summary = utils.get_response(
+                    chain=self.chain,
+                    chat_history=self.chat_history,
+                    question=user_input,
+                    context=current_context
+                )
+            return response, summary
+        
+        return response, summary
     
     def handle_special_response(self, response: str, summary: str) -> bool:
         """
@@ -144,7 +172,7 @@ class ChatbotSession:
             self.display_response(response)
             self._shutdown()
             return True
-            
+        
         elif summary == 'ticket đã được tạo':
             self.chat_history.add_ai_message(response)
             self.display_response(response)
@@ -195,6 +223,14 @@ class ChatbotSession:
                 # Handle special cases
                 if self.handle_special_response(response, summary):
                     continue
+                
+                response, summary = self.handle_special_response_with_ticket_information(response, summary, user_input)
+                
+                if isinstance(response, dict):
+                    response, summary = utils.route_to_stage(
+                        self.stage_manager, response, summary
+                    )
+                    
                 
                 # Update chat history and display response
                 self.update_chat_history(user_input, response)

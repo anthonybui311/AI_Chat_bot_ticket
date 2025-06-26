@@ -64,7 +64,7 @@ class StageManager:
     def _initialize_stage_contexts(self) -> Dict[str, str]:
         """Initialize stage contexts from config"""
         return {
-            self.STAGE_MAIN: config.CONTEXT,
+            self.STAGE_MAIN: config.MAIN_CONTEXT,
             self.STAGE_CREATE: config.CREATE_CONTEXT,
             self.STAGE_EDIT: config.EDIT_CONTEXT,
             self.STAGE_CONFIRMATION: config.CONFIRMATION_CONTEXT,
@@ -78,7 +78,7 @@ class StageManager:
 
     def get_current_context(self) -> str:
         """Get context for current stage"""
-        context = self.stage_contexts.get(self.current_stage, config.CONTEXT)
+        context = self.stage_contexts.get(self.current_stage, config.MAIN_CONTEXT)
         logger.debug(f"Retrieved context for stage: {self.current_stage}")
         return context
 
@@ -125,6 +125,14 @@ class StageManager:
     def is_in_correct_stage(self) -> bool:
         """Check if currently in correct stage"""
         return self.current_stage == self.STAGE_CORRECT
+
+    def is_in_create_stage(self) -> bool:
+        """Check if currently in create stage"""
+        return self.current_stage == self.STAGE_CREATE
+    
+    def is_in_edit_stage(self) -> bool:
+        """Check if currently in edit stage"""
+        return self.current_stage == self.STAGE_EDIT
 
     # Ticket data management
     def store_ticket_data(self, ticket_data: Dict[str, Any]) -> None:
@@ -399,6 +407,7 @@ def _handle_main_stage(stage_manager: StageManager, response_text, summary: str)
     elif summary == 'sửa ticket':
         stage_manager.switch_stage('edit')
         return edit_module.handle_edit_stage(response_text, summary, stage_manager)
+    
     elif summary == 'thoát':
         return response_text, summary
     else:
