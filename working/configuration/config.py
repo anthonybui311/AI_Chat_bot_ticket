@@ -12,7 +12,7 @@ MAX_TOKENS = 4096
 REQUEST_TIMEOUT = 30  # seconds
 LOG_DIRECTORY = "/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/logs"  # Log dir path
 # System Configuration
-DATA_PATH = "/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data"
+DATA_PATH = "/Users/vietbui/Desktop/Projects/AI_Chat_bot_ticket/working/data/chat_history"
 
 # =====================================================
 # SHARED CONTEXT COMPONENTS

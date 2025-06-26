@@ -2,9 +2,17 @@
 langchain_groq==0.3.2
 
 # API and HTTP
-requests==2.32.3
+requests>=2.26.0
 
 # Development Tools
 python-dotenv==1.1.1
 
+# Frontend
+streamlit>=1.0.0
+python-dateutil>=2.8.2
 
+# Pipeline
+fastapi>=0.68.0
+uvicorn>=0.15.0
+pydantic>=1.8.0
+python-multipart>=0.0.5

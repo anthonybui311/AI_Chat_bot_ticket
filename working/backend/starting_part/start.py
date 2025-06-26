@@ -58,9 +58,8 @@ class ChatbotSession:
         print("\n" + "="*60)
         print("🤖 AI TICKET SUPPORT CHATBOT")
         print("="*60)
-        print("Chào mừng! Tôi là trợ lý hỗ trợ ticket.")
-        print("Nhập 'tạm biệt' hoặc 'thoát' để kết thúc cuộc trò chuyện.")
-        print("="*60)
+        print("Chatbot: Chào mừng! Tôi là trợ lý hỗ trợ ticket. Bạn muốn sửa hay tạo ticket?")
+        print("Nhập tạm biệt hoặc thoát để kết thúc cuộc trò chuyện.")
     
     def get_user_input(self) -> str:
         """
