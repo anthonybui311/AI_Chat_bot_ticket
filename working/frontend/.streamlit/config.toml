@@ -1,0 +1,10 @@
+[theme]
+primaryColor = "#000000"  # Black
+backgroundColor = "#000000"  # Black
+secondaryBackgroundColor = "#3b3838"  # Gray
+textColor = "#f4f1f1"  # White
+
+
+
+# Optional: Font settings (you can choose from 'sans serif', 'serif', or 'monospace')
+font = "sans serif"

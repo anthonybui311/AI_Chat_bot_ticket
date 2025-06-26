@@ -2,6 +2,11 @@ import requests
 from typing import Dict, List, Tuple, Optional
 import streamlit as st
 
+@st.cache_resource(show_spinner=False)
+def get_api_client() -> 'APIClient':
+    """Get or create a cached API client instance"""
+    return APIClient()
+
 class APIClient:
     """Client for interacting with the chatbot API"""
     
@@ -31,8 +36,9 @@ class APIClient:
             return data["response"], data["success"]
             
         except requests.RequestException as e:
-            st.error(f"API Error: {str(e)}")
-            return f"Error communicating with chatbot: {str(e)}", False
+            error_msg = f"Error communicating with chatbot: {str(e)}"
+            st.error(error_msg)
+            return error_msg, False
     
     def get_chat_history(self) -> List[Dict]:
         """Get chat history for current session"""
